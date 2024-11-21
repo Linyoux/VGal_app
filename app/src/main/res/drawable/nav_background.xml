@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#20ffffff"/> <!-- 这里的80是透明度，000000是颜色代码，你可以根据需要修改这些值 -->
+</shape>

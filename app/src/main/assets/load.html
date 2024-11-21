@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏存档与读档</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #343a40;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .grid {
+            display: grid;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+        .save-item, .load-item {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+        .save-item:hover, .load-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .save-item img, .load-item img {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .pagination button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: background-color 0.2s;
+        }
+        .pagination button:hover {
+            background-color: #0056b3;
+        }
+        .nav-button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        .nav-button:hover {
+            background-color: #218838;
+        }
+        /* 存档和读档背景颜色 */
+        .save-view {
+            background-color: #e7f1ff;
+        }
+        .load-view {
+            background-color: #e7ffe7;
+        }
+
+        /* 模态弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 400px; /* 限制最大宽度 */
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .modal-header {
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .confirm-button {
+            background-color: #28a745;
+            color: white;
+        }
+        .cancel-button {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* 响应式设计 */
+        @media (orientation: landscape) {
+            .grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+        @media (orientation: portrait) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 600px) {
+            .save-item img, .load-item img {
+                width: 100%;
+                aspect-ratio: 16 / 9;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="main-container">
+        <h1 id="page-title">游戏存档</h1>
+        <div class="grid" id="save-grid">
+            <!-- 存档项目将动态添加到这里 -->
+        </div>
+        <div class="grid" id="load-grid" style="display: none;">
+            <!-- 读档项目将动态添加到这里 -->
+        </div>
+        <div class="pagination" id="pagination">
+            <button id="prev-button" disabled>上一页</button>
+            <span id="page-info">第 1 页 / 10 页</span>
+            <button id="next-button">下一页</button>
+        </div>
+        <button class="nav-button" id="toggle-button" onclick="toggleView()">切换到读档界面</button>
+    </div>
+
+    <!-- 模态弹窗 -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modal-header">确认操作</div>
+            <div id="modal-body">您确定要执行此操作吗？</div>
+            <div class="modal-buttons">
+                <button class="confirm-button" id="confirm-button">确认</button>
+                <button class="cancel-button" id="cancel-button">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const totalPages = 10; // 总页数
+        const itemsPerPage = 10; // 每页条数
+        let currentPage = 1; // 当前页
+        let currentSlot = null; // 当前操作的存档槽
+        let isSaveView = true; // 当前是否为存档界面
+        let actionType = ""; // 当前操作类型（保存或读取）
+
+
+
+        // 默认缩略图的Base64编码
+        const defaultThumbnail = 'data:image/webp;base64,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';
+
+        // 加载存档数据
+        function loadSavedData() {
+            const saveGrid = document.getElementById('save-grid');
+            saveGrid.innerHTML = ''; // 清空当前列表
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+
+            console.log(VGAL.getSaveData())
+            var datas = JSON.parse(VGAL.getSaveData())
+            console.log(datas)
+
+            for (let slot = startIndex + 1; slot <= endIndex; slot++) {
+                let data = datas[slot] ?? {}
+                const timestamp = data.saveTime;
+                const bmpData = data.bmpPath;
+                const timestampDisplay = timestamp ? new Date(timestamp).toLocaleString() : "无存档";
+
+                const saveItem = document.createElement('div');
+                saveItem.classList.add('save-item');
+                saveItem.setAttribute('data-slot', slot);
+                saveItem.innerHTML = `
+                    <img src="${bmpData ? 'data:image/png;base64,' + bmpData : defaultThumbnail}" alt="缩略图" />
+                    <span>存档 ${slot} - <span class="timestamp">${timestampDisplay}</span></span>
+                `;
+                
+                saveItem.addEventListener('click', () => {
+                    currentSlot = slot;
+                    actionType = "save"; // 设置操作类型为存档
+                    showModal(`您确定要存档到存档 ${slot} 吗？`);
+                });
+
+                saveGrid.appendChild(saveItem);
+            }
+
+            // 更新分页信息
+            document.getElementById('page-info').textContent = `第 ${currentPage} 页 / ${totalPages} 页`;
+            document.getElementById('prev-button').disabled = (currentPage === 1);
+            document.getElementById('next-button').disabled = (currentPage === totalPages);
+        }
+
+        // 加载读档数据
+        function loadLoadData() {
+            const loadGrid = document.getElementById('load-grid');
+            loadGrid.innerHTML = ''; // 清空当前列表
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            var datas = JSON.parse(VGAL.getSaveData())
+
+            for (let slot = startIndex + 1; slot <= endIndex; slot++) {
+                let data = datas[slot] ?? {}
+                const timestamp = data.saveTime;
+                const bmpData = data.bmpPath;
+
+                const timestampDisplay = timestamp ? new Date(timestamp).toLocaleString() : "无存档";
+
+                const loadItem = document.createElement('div');
+                loadItem.classList.add('load-item');
+                loadItem.setAttribute('data-slot', slot);
+                loadItem.innerHTML = `
+                    <img src="${bmpData ? 'data:image/bmp;base64,' + bmpData : defaultThumbnail}" alt="缩略图" />
+                    <span>存档 ${slot} - <span class="timestamp">${timestampDisplay}</span></span>
+                `;
+                
+                loadItem.addEventListener('click', () => {
+                    currentSlot = slot;
+                    actionType = "load"; // 设置操作类型为读档
+                    showModal(`您确定要读取存档 ${slot} 吗？`);
+                });
+
+                loadGrid.appendChild(loadItem);
+            }
+
+            // 更新分页信息
+            document.getElementById('page-info').textContent = `第 ${currentPage} 页 / ${totalPages} 页`;
+            document.getElementById('prev-button').disabled = (currentPage === 1);
+            document.getElementById('next-button').disabled = (currentPage === totalPages);
+        }
+
+        // 显示模态弹窗
+        function showModal(message) {
+            document.getElementById('modal-body').textContent = message;
+            document.getElementById('confirmationModal').style.display = "block";
+        }
+
+        // 隐藏模态弹窗
+        function hideModal() {
+            document.getElementById('confirmationModal').style.display = "none";
+        }
+
+        // 确认存档或读档
+        document.getElementById('confirm-button').addEventListener('click', () => {
+            if (actionType === "save") {
+                saveGame(currentSlot);
+            } else if (actionType === "load") {
+                loadGame(currentSlot);
+            }
+            hideModal(); // 隐藏模态弹窗
+        });
+
+        // 取消操作
+        document.getElementById('cancel-button').addEventListener('click', () => {
+            hideModal(); // 隐藏模态弹窗
+        });
+
+        // 存档游戏到 localStorage
+        function saveGame(slot) {
+            const timestamp = new Date().toISOString();
+            const bmpData = "base64EncodedBMPData"; // 在实际代码中应该是从安卓端传来的BMP数据
+
+            flag = VGAL.SaveData(slot)
+            if (flag){
+                alert(`游戏已保存到存档 ${slot}`);
+                loadSavedData(); // 重新加载数据以更新显示
+            }else {
+                alert("保存失败")
+            }
+
+        }
+
+        // 读取游戏存档
+        function loadGame(slot) {
+            let flag = VGAL.LoadData(slot)
+
+            if (flag) {
+                VGAL.Close();
+            } else {
+                alert('没有存档可读取。');
+            }
+        }
+
+        // 切换界面
+        function toggleView() {
+            isSaveView = !isSaveView;
+            document.getElementById('page-title').textContent = isSaveView ? '游戏存档' : '游戏读档';
+            document.getElementById('save-grid').style.display = isSaveView ? 'grid' : 'none';
+            document.getElementById('load-grid').style.display = isSaveView ? 'none' : 'grid';
+            document.getElementById('toggle-button').textContent = isSaveView ? '切换到读档界面' : '切换到存档界面';
+            document.getElementById('main-container').className = isSaveView ? 'container save-view' : 'container load-view';
+            currentPage = 1; // 切换时重置到第一页
+            if (isSaveView) {
+                loadSavedData();
+            } else {
+                loadLoadData();
+            }
+        }
+
+        // 翻页功能
+        document.getElementById('prev-button').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                if (isSaveView) {
+                    loadSavedData(); // 重新加载数据以更新显示
+                } else {
+                    loadLoadData();
+                }
+            }
+        });
+
+        document.getElementById('next-button').addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                if (isSaveView) {
+                    loadSavedData(); // 重新加载数据以更新显示
+                } else {
+                    loadLoadData();
+                }
+            }
+        });
+
+        // 页面加载时获取存档数据
+        // loadSavedData();
+
+        toggleView();
+    </script>
+</body>
+</html>

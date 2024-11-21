@@ -1,0 +1,34 @@
+--局部变量，当前脚本有效
+@var a = 1
+--全局变量，所有脚本有效，用于好感度进线系统
+@gvar b = 1
+
+play game.mp4
+proc
+
+bgm start xx.mp3
+text ocr识别出来的
+extratext 额外字幕，可以做外挂翻译用
+time 123.12
+proc
+
+bgm stop
+proc
+
+select img 静态图路径
+select html 使用html（可以做动画，优先级高与img，提供接口VGAL.select(选择第几个)）
+select count 2
+-- count指定数量，click按顺序写
+select click x1,y1,x2,y2,scritName
+
+
+#if b > 1
+    select click x1,y1,x2,y2,scritName
+#else
+    select click x1,y1,x2,y2,scritName
+#end
+
+proc
+
+call scritName
+proc
