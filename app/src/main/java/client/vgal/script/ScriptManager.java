@@ -1,7 +1,5 @@
 package client.vgal.script;
 
-
-import android.renderscript.Script;
 import client.vgal.script.block.CallBlock;
 import client.vgal.script.block.NormalBlock;
 import client.vgal.script.block.PlayBlock;
@@ -24,33 +22,46 @@ public class ScriptManager {
 
     private ScriptParser scriptParser;
 
+    // Default constructor that initializes with "start.vgs"
     public ScriptManager(File scriptRoot) {
-        this(scriptRoot,"start.vgs");
+        this(scriptRoot, "start.vgs");
     }
-    public ScriptManager(File scriptRoot,String currentScript) {
+
+    // Constructor that allows the specification of a script name
+    public ScriptManager(File scriptRoot, String currentScript) {
         this.scriptRoot = scriptRoot;
         this.currentScript = currentScript;
         scriptParser = new DefaultScriptParser();
+        
+        // Automatically call current script when initializing
+        try {
+            call(currentScript); // Load the script when the manager is created
+        } catch (ScriptErrorException e) {
+            e.printStackTrace(); // Handle exceptions appropriately
+        }
     }
 
+    // Parse the given script and return a list of script blocks
     public List<ScriptBlock> parse(String scriptName) throws ScriptErrorException {
-        String scriptContent = FileUtil.readFileUTF8(new File(scriptRoot,scriptName).getAbsolutePath());
+        String scriptContent = FileUtil.readFileUTF8(new File(scriptRoot, scriptName).getAbsolutePath());
         return scriptParser.parse(scriptContent);
     }
 
+    // Call the current script to load its blocks
     public void callCurrent() throws ScriptErrorException {
         call(this.currentScript);
     }
 
-    public void call(String scriptName) throws ScriptErrorException{
+    // Call a specified script by name
+    public void call(String scriptName) throws ScriptErrorException {
         List<ScriptBlock> list = parse(scriptName);
         blocks.clear();
         otherBlocks.clear();
 
-        for (ScriptBlock block : list){
-            if (block instanceof NormalBlock){
+        for (ScriptBlock block : list) {
+            if (block instanceof NormalBlock) {
                 blocks.add(block);
-            }else {
+            } else {
                 otherBlocks.add(block);
             }
         }
@@ -59,85 +70,89 @@ public class ScriptManager {
         currentIndex.set(0);
     }
 
-    public ScriptBlock getCurrentBlock(){
+    // Get the current block of the script
+    public ScriptBlock getCurrentBlock() {
         return blocks.get(currentIndex.get());
     }
 
-    public ScriptBlock next(int index){
+    // Move to the next block by index
+    public ScriptBlock next(int index) {
         int i = currentIndex.getAndAdd(index);
-        ScriptBlock scriptBlock = getBlock(i);
-        return scriptBlock;
+        return getBlock(i);
     }
 
-    public ScriptBlock prev(int index){
-        int i = currentIndex.getAndAdd(index);
-        ScriptBlock scriptBlock = getBlock(i);
-        return scriptBlock;
+    // Move to the previous block by index
+    public ScriptBlock prev(int index) {
+        int i = currentIndex.getAndAdd(-index); // decrementing
+        return getBlock(i);
     }
 
-    public ScriptBlock next(){
+    // Move to the next block
+    public ScriptBlock next() {
         return next(1);
     }
 
-    public ScriptBlock prev(){
+    // Move to the previous block
+    public ScriptBlock prev() {
         return prev(1);
     }
 
-    public ScriptBlock getBlock(int index){
-        if (index >= blocks.size()){
-            return null;
+    // Get a block at a specific index
+    public ScriptBlock getBlock(int index) {
+        if (index >= blocks.size() || index < 0) {
+            return null; // Make sure index is valid
         }
         return blocks.get(index);
     }
 
-    public int getCurrentPosition(){
+    // Get the current position in the script
+    public int getCurrentPosition() {
         return currentIndex.get();
     }
 
+    // Get the name of the current script
     public String getCurrentScript() {
         return currentScript;
     }
 
-    public void resetIndex(long currentTime){
-
-        // 遍历JSONArray
+    // Reset the current index based on the current time
+    public void resetIndex(long currentTime) {
         for (int i = 0; i < blocks.size(); i++) {
-            // 获取每个JSONObject
             ScriptBlock scriptBlock = blocks.get(i);
-            if (scriptBlock instanceof NormalBlock){
+            if (scriptBlock instanceof NormalBlock) {
                 NormalBlock normalBlock = (NormalBlock) scriptBlock;
                 long time = (long) (normalBlock.getTime() * 1000);
-                if (time > currentTime){
-                    currentIndex.set(Math.max(0,i));
+                if (time > currentTime) {
+                    currentIndex.set(Math.max(0, i));
                     return;
                 }
             }
-
         }
-
         currentIndex.set(blocks.size() - 1);
     }
 
-    public void setCurrentPosition(int index){
+    // Set the current position manually
+    public void setCurrentPosition(int index) {
         currentIndex.set(index);
     }
 
-    public PlayBlock getPlayVideo(){
+    // Get the PlayBlock from the script
+    public PlayBlock getPlayVideo() {
         for (ScriptBlock block : otherBlocks) {
-            if (block instanceof PlayBlock){
+            if (block instanceof PlayBlock) {
                 return (PlayBlock) block;
             }
         }
         return null;
     }
 
-    public CallBlock getNextCall(){
+    // Get the next CallBlock from the script
+    public CallBlock getNextCall() {
         for (ScriptBlock block : otherBlocks) {
-            if (block instanceof CallBlock){
+            if (block instanceof CallBlock) {
                 return (CallBlock) block;
             }
         }
         return null;
     }
-
 }
