@@ -1,6 +1,10 @@
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -9,17 +13,16 @@ import android.provider.Settings;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
 import client.vgal.script.ScriptManager;
 import client.vgal.script.ScriptErrorException;
 
@@ -35,12 +38,26 @@ public class LauncherActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_launcher); // 确保这个布局文件存在
 
-        // 初始化 UI 组件
-        lvVgsFiles = findViewById(R.id.lv_vgs_files);
-        btnStart = findViewById(R.id.btn_start);
+        // 动态创建布局
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(16, 16, 16, 16);
+
+        // 动态创建 ListView 和 Button
+        lvVgsFiles = new ListView(this);
+        btnStart = new Button(this);
+        btnStart.setText("Start Selected File");
         btnStart.setEnabled(false);  // 初始状态为不可点击
+
+        // 设置按钮的虚拟图标
+        Bitmap icon = createCircularIcon(100);
+        btnStart.setBackground(new BitmapDrawable(getResources(), icon));
+
+        // 将组件添加到布局
+        layout.addView(lvVgsFiles);
+        layout.addView(btnStart);
+        setContentView(layout);
 
         scriptRoot = new File(Environment.getExternalStorageDirectory(), "vgal");
         vgsFiles = new ArrayList<>();
@@ -63,6 +80,18 @@ public class LauncherActivity extends AppCompatActivity {
                 Toast.makeText(this, "请先选择一个文件！", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private Bitmap createCircularIcon(int size) {
+        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setColor(0xFF6200EE); // 紫色
+
+        canvas.drawOval(new RectF(0, 0, size, size), paint);
+
+        return bitmap;
     }
 
     private void requestPermission() {
