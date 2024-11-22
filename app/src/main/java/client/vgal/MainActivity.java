@@ -12,9 +12,10 @@ import android.os.Environment;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
-import android.webkit.*;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.webkit.*;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,9 +25,6 @@ import client.vgal.utils.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,10 +36,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        // 启动VgsLauncherActivity的按钮
-        Button launchVgsButton = findViewById(R.id.launch_vgs_button);
+        // 创建一个LinearLayout以代码方式设置布局
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        // 创建启动VgsLauncherActivity的按钮
+        Button launchVgsButton = new Button(this);
+        launchVgsButton.setText("Launch VGS Activity");
+        launchVgsButton.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        // 添加按钮点击监听器
         launchVgsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -51,6 +58,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // 将按钮添加到布局
+        layout.addView(launchVgsButton);
+
+        // 设置布局为活动的内容视图
+        setContentView(layout);
+
+        // 继续初始化其他组件
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
@@ -58,10 +72,12 @@ public class MainActivity extends AppCompatActivity {
         requestPermission();
         startVideoServer();
 
-        webView = findViewById(R.id.webView);
+        // 如果你的应用中需要WebView，可以在代码中动态添加，或使用其他方式
+        webView = new WebView(this);
+        layout.addView(webView);
+
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
-
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
 
         WebSettings webSettings = webView.getSettings();
