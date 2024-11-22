@@ -7,16 +7,17 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.webkit.*;
+import android.widget.Button;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import client.vgal.utils.FileUtil;
@@ -37,28 +38,29 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-        if(true){
-            Intent intent = new Intent(this, NativeVideoActivity.class);
+        // 启动VgsLauncherActivity的按钮
+        Button launchVgsButton = findViewById(R.id.launch_vgs_button);
+        launchVgsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 启动VgsLauncherActivity
+                Intent intent = new Intent(MainActivity.this, VgsLauncherActivity.class);
+                startActivity(intent);
+            }
+        });
 
-        // 启动新的Activity
-            startActivity(intent);
-            return;
-        }
-
-        if (getSupportActionBar() != null){
+        if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
-
-        setContentView(R.layout.activity_main);
 
         requestPermission();
         startVideoServer();
 
         webView = findViewById(R.id.webView);
-        webView.getSettings().setJavaScriptEnabled(true); // 如果你的HTML需要JavaScript支持
-        webView.getSettings().setDomStorageEnabled(true); // 如果你的HTML需要JavaScript支持
-
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.getSettings().setDomStorageEnabled(true);
 
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
 
@@ -69,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
             public boolean onConsoleMessage(ConsoleMessage cm) {
                 Log.d("WebConsole", cm.message() + " -- From line "
                         + cm.lineNumber() + " of "
-                        + cm.sourceId() );
+                        + cm.sourceId());
                 return true;
             }
         });
@@ -87,10 +89,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         webView.loadUrl("file:///android_asset/index.html");
-
-//        webView.loadUrl("https://v.jstv.com/xw360/");
     }
 
+    // 其他方法...
 
     public class WebAppInterface {
         Context mContext;
@@ -101,12 +102,12 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public String getDataPath() {
-            return new File(Environment.getExternalStorageDirectory(),"vgal").getAbsolutePath();
+            return new File(Environment.getExternalStorageDirectory(), "vgal").getAbsolutePath();
         }
 
         @JavascriptInterface
         public String getScript() throws IOException {
-            String text =  FileUtil.readFileUTF8(new File(Environment.getExternalStorageDirectory(),"vgal/script.json").getAbsolutePath());
+            String text = FileUtil.readFileUTF8(new File(Environment.getExternalStorageDirectory(), "vgal/script.json").getAbsolutePath());
             return text;
         }
     }
@@ -117,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
         stopVideoServer();
     }
 
-    private void startVideoServer(){
+    private void startVideoServer() {
         try {
             videoServer = new VideoServer(6867);
         } catch (IOException ioe) {
@@ -125,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void stopVideoServer(){
+    private void stopVideoServer() {
         if (videoServer != null) {
             videoServer.stop();
         }
@@ -143,12 +144,9 @@ public class MainActivity extends AppCompatActivity {
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_IMMERSIVE
-                        // Set the content to appear under the system bars so that the
-                        // content doesn't resize when the system bars hide and show.
                         | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        // Hide the nav bar and status bar
                         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_FULLSCREEN);
     }
@@ -161,28 +159,18 @@ public class MainActivity extends AppCompatActivity {
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
     }
 
-
-
-
     private void requestPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // 先判断有没有权限
-        if (Environment.isExternalStorageManager()) {
-            } else {
+            if (!Environment.isExternalStorageManager()) {
                 Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                 intent.setData(Uri.parse("package:" + this.getApplicationContext().getPackageName()));
                 startActivityForResult(intent, REQUEST_CODE);
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // 先判断有没有权限
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-              
-            } else {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                    ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE);
             }
-        } else {
-          
         }
     }
 
@@ -190,13 +178,10 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CODE) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-
-            } else {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                // 权限请求被拒绝
             }
         }
     }
-
-
 }
