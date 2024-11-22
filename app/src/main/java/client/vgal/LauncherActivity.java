@@ -1,5 +1,7 @@
 package client.vgal;
 
+import client.vgal.script.ScriptManager;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
@@ -11,6 +13,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
 
 import java.io.File;
 import java.util.ArrayList;
