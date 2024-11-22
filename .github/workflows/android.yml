@@ -5,7 +5,11 @@ on:
   pull_request:
     branches: [ "main" ]
   release:
-    types: [created]  # 当创建 release 时触发
+    types: [created]
+
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -20,11 +24,13 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew assembleRelease  # 生成 release APK
+      run: ./gradlew assembleRelease
+    - name: Verify APK File
+      run: ls -la app/build/outputs/apk/release/
     - name: Upload APK to Release
       uses: softprops/action-gh-release@v1
       with:
-        tag: ${{ github.event.release.tag }}  # 使用发布的标签
-        files: app/build/outputs/apk/release/app-release.apk  # APK 文件路径
+        tag_name: ${{ github.event.release.tag_name }}
+        files: app/build/outputs/apk/release/app-release.apk
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub Token
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
