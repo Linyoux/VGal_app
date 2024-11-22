@@ -1,68 +1,70 @@
 package client.vgal;
 
-import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import client.vgal.script.ScriptManager;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.List;
 
-public class VgsLauncherActivity extends Activity {
+public class VgsLauncherActivity extends AppCompatActivity {
 
-    private ListView listView;
-    private ArrayList<String> vgsFiles;
+    private ListView vgsListView;
+    private List<String> vgsFiles;
+    private File scriptRoot;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        // 创建ListView程序性地
-        listView = new ListView(this);
-        setContentView(listView); // 设置ListView为活动的内容视图
+        setContentView(R.layout.activity_launcher); // 使用新的布局文件名
 
+        vgsListView = findViewById(R.id.vgsListView);
         vgsFiles = new ArrayList<>();
+        scriptRoot = new File(getExternalFilesDir(null), "vgal"); // 获取vgal目录
 
-        // 获取vgal目录
-        File vgalDirectory = new File(Environment.getExternalStorageDirectory(), "vgal");
-        if (vgalDirectory.exists() && vgalDirectory.isDirectory()) {
-            File[] files = vgalDirectory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isFile() && file.getName().endsWith(".vgs")) {
-                        vgsFiles.add(file.getName());
-                    }
-                }
-            }
-        }
+        // 读取所有vgs文件
+        loadVgsFiles();
 
-        // 设置适配器
+        // 设置ListView的适配器
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, vgsFiles);
-        listView.setAdapter(adapter);
+        vgsListView.setAdapter(adapter);
 
         // 设置点击事件
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        vgsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String selectedFile = vgsFiles.get(position);
-                launchVgsFile(selectedFile);
+                String selectedVgs = vgsFiles.get(position);
+                launchVgsScript(selectedVgs);
             }
         });
     }
 
-    private void launchVgsFile(String fileName) {
-        File scriptRoot = new File(Environment.getExternalStorageDirectory(), "vgal");
-        ScriptManager scriptManager = new ScriptManager(scriptRoot, fileName);
-        try {
-            scriptManager.callCurrent();
-            Toast.makeText(this, "Launched " + fileName, Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Error launching " + fileName, Toast.LENGTH_SHORT).show();
+    private void loadVgsFiles() {
+        // 列出所有以.vgs结尾的文件
+        File[] files = scriptRoot.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".vgs");
+            }
+        });
+
+        if (files != null) {
+            for (File file : files) {
+                vgsFiles.add(file.getName());
+            }
         }
+    }
+
+    private void launchVgsScript(String vgsFileName) {
+        Intent intent = new Intent(this, NativeVideoActivity.class);
+        intent.putExtra("vgs_file_name", vgsFileName); // 传递文件名
+        startActivity(intent);
     }
 }
