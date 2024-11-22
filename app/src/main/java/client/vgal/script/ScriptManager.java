@@ -22,37 +22,34 @@ public class ScriptManager {
 
     private ScriptParser scriptParser;
 
-    // Default constructor that initializes with "start.vgs"
+    // 构造函数初始化，但不自动执行脚本
     public ScriptManager(File scriptRoot) {
         this(scriptRoot, "start.vgs");
     }
 
-    // Constructor that allows the specification of a script name
     public ScriptManager(File scriptRoot, String currentScript) {
         this.scriptRoot = scriptRoot;
         this.currentScript = currentScript;
-        scriptParser = new DefaultScriptParser();
-        
-        // Automatically call current script when initializing
-        try {
-            call(currentScript); // Load the script when the manager is created
-        } catch (ScriptErrorException e) {
-            e.printStackTrace(); // Handle exceptions appropriately
-        }
+        this.scriptParser = new DefaultScriptParser();
     }
 
-    // Parse the given script and return a list of script blocks
+    // 解析并执行指定的脚本
+    public void loadAndExecuteScript(String scriptName) throws ScriptErrorException {
+        call(scriptName);
+    }
+
+    // 解析给定脚本并返回脚本块列表
     public List<ScriptBlock> parse(String scriptName) throws ScriptErrorException {
         String scriptContent = FileUtil.readFileUTF8(new File(scriptRoot, scriptName).getAbsolutePath());
         return scriptParser.parse(scriptContent);
     }
 
-    // Call the current script to load its blocks
+    // 加载当前脚本的块
     public void callCurrent() throws ScriptErrorException {
         call(this.currentScript);
     }
 
-    // Call a specified script by name
+    // 加载指定名称的脚本
     public void call(String scriptName) throws ScriptErrorException {
         List<ScriptBlock> list = parse(scriptName);
         blocks.clear();
@@ -70,52 +67,52 @@ public class ScriptManager {
         currentIndex.set(0);
     }
 
-    // Get the current block of the script
+    // 获取当前脚本块
     public ScriptBlock getCurrentBlock() {
         return blocks.get(currentIndex.get());
     }
 
-    // Move to the next block by index
+    // 移动到下一个块（通过索引）
     public ScriptBlock next(int index) {
         int i = currentIndex.getAndAdd(index);
         return getBlock(i);
     }
 
-    // Move to the previous block by index
+    // 移动到前一个块（通过索引）
     public ScriptBlock prev(int index) {
-        int i = currentIndex.getAndAdd(-index); // decrementing
+        int i = currentIndex.getAndAdd(-index); // 减少索引
         return getBlock(i);
     }
 
-    // Move to the next block
+    // 移动到下一个块
     public ScriptBlock next() {
         return next(1);
     }
 
-    // Move to the previous block
+    // 移动到前一个块
     public ScriptBlock prev() {
         return prev(1);
     }
 
-    // Get a block at a specific index
+    // 获取指定索引处的块
     public ScriptBlock getBlock(int index) {
         if (index >= blocks.size() || index < 0) {
-            return null; // Make sure index is valid
+            return null; // 确保索引有效
         }
         return blocks.get(index);
     }
 
-    // Get the current position in the script
+    // 获取当前脚本位置
     public int getCurrentPosition() {
         return currentIndex.get();
     }
 
-    // Get the name of the current script
+    // 获取当前脚本名称
     public String getCurrentScript() {
         return currentScript;
     }
 
-    // Reset the current index based on the current time
+    // 根据当前时间重置索引
     public void resetIndex(long currentTime) {
         for (int i = 0; i < blocks.size(); i++) {
             ScriptBlock scriptBlock = blocks.get(i);
@@ -131,12 +128,12 @@ public class ScriptManager {
         currentIndex.set(blocks.size() - 1);
     }
 
-    // Set the current position manually
+    // 手动设置当前位置
     public void setCurrentPosition(int index) {
         currentIndex.set(index);
     }
 
-    // Get the PlayBlock from the script
+    // 获取脚本中的 PlayBlock
     public PlayBlock getPlayVideo() {
         for (ScriptBlock block : otherBlocks) {
             if (block instanceof PlayBlock) {
@@ -146,7 +143,7 @@ public class ScriptManager {
         return null;
     }
 
-    // Get the next CallBlock from the script
+    // 获取脚本中的下一个 CallBlock
     public CallBlock getNextCall() {
         for (ScriptBlock block : otherBlocks) {
             if (block instanceof CallBlock) {
