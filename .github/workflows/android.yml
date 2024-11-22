@@ -1,14 +1,14 @@
-name: Build and Release APK
+name: Build and Upload APK
 
 on:
   release:
-    types: [created] # 当创建 Release 时触发
+    types: [created]
 
 permissions:
-  contents: write # 允许修改 Release 内容
+  contents: write
 
 jobs:
-  build-and-upload-apk:
+  build-and-upload:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,29 +25,37 @@ jobs:
     - name: Grant execute permission for Gradle wrapper
       run: chmod +x gradlew
 
-    - name: Build release APK
+    - name: Build Release APK
       run: ./gradlew assembleRelease
 
-    - name: Decode keystore
+    - name: Generate a signing key
       run: |
-        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > my-release-key.jks
+        keytool -genkeypair -v \
+          -keystore temp-key.jks \
+          -keyalg RSA \
+          -keysize 2048 \
+          -validity 10000 \
+          -alias temp-key \
+          -storepass temp-pass \
+          -keypass temp-pass \
+          -dname "CN=Temporary, OU=Temporary, O=Temporary, L=Temporary, S=Temporary, C=US"
 
     - name: Sign APK
       run: |
         $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
-          --ks my-release-key.jks \
-          --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
-          --key-pass pass:${{ secrets.KEY_PASSWORD }} \
-          --out app-release-vgal.apk \  # 输出文件名带有 vgal 后缀
+          --ks temp-key.jks \
+          --ks-pass pass:temp-pass \
+          --key-pass pass:temp-pass \
+          --out app-release-signed.apk \
           app/build/outputs/apk/release/app-release-unsigned.apk
 
     - name: Verify signed APK
       run: |
-        $ANDROID_HOME/build-tools/34.0.0/apksigner verify app-release-vgal.apk
+        $ANDROID_HOME/build-tools/34.0.0/apksigner verify app-release-signed.apk
 
-    - name: Upload APK to GitHub Release
+    - name: Upload Signed APK to Release
       uses: softprops/action-gh-release@v1
       with:
-        files: app-release-vgal.apk
+        files: app-release-signed.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
