@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable; // 导入 BitmapDrawable
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
