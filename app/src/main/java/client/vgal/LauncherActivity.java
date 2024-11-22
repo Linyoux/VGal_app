@@ -1,85 +1,77 @@
-package client.vgal;
-
-import android.app.Activity;
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.Toast;
+import android.provider.Settings;
+import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+public class LauncherActivity extends AppCompatActivity {
 
-import client.vgal.script.ScriptManager;
-import client.vgal.script.ScriptErrorException;
-
-public class LauncherActivity extends Activity {
-
-    private ListView lvVgsFiles;
-    private Button btnStart;
-    private List<String> vgsFiles;
-    private String selectedFile;
-    private File scriptRoot;
+    private static final int REQUEST_CODE = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_launcher);
+        setContentView(R.layout.activity_launcher); // 替换为您的布局文件
 
-        lvVgsFiles = findViewById(R.id.lv_vgs_files);
-        btnStart = findViewById(R.id.btn_start);
-        btnStart.setEnabled(false);  // 初始状态为不可点击
+        // 请求权限
+        requestPermission();
+    }
 
-        scriptRoot = new File(Environment.getExternalStorageDirectory(), "vgal");
-        vgsFiles = new ArrayList<>();
-
-        loadVgsFiles();
-
-        lvVgsFiles.setOnItemClickListener((parent, view, position, id) -> {
-            selectedFile = vgsFiles.get(position);
-            btnStart.setEnabled(true);
-        });
-
-        btnStart.setOnClickListener(v -> {
-            if (selectedFile != null) {
-                startVgsFile(selectedFile);
+    private void requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // 先判断有没有权限
+            if (Environment.isExternalStorageManager()) {
+                // 权限已获得，可以进行文件操作
+                Log.d("LauncherActivity", "MANAGE_EXTERNAL_STORAGE permission granted");
             } else {
-                Toast.makeText(this, "请先选择一个文件！", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                intent.setData(Uri.parse("package:" + this.getApplicationContext().getPackageName()));
+                startActivityForResult(intent, REQUEST_CODE);
             }
-        });
-    }
-
-    private void loadVgsFiles() {
-        if (!scriptRoot.exists()) {
-            Toast.makeText(this, "脚本目录不存在！", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        File[] files = scriptRoot.listFiles((dir, name) -> name.endsWith(".vgs"));
-        if (files != null) {
-            for (File file : files) {
-                vgsFiles.add(file.getName());
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // 先判断有没有权限
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                // 权限已获得，可以进行文件操作
+                Log.d("LauncherActivity", "READ_EXTERNAL_STORAGE and WRITE_EXTERNAL_STORAGE permissions granted");
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE);
             }
-        }
-
-        if (vgsFiles.isEmpty()) {
-            Toast.makeText(this, "没有找到 VGS 文件！", Toast.LENGTH_SHORT).show();
         } else {
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, vgsFiles);
-            lvVgsFiles.setAdapter(adapter);
+            // Android 6.0 以下不需要处理权限
+            Log.d("LauncherActivity", "No need to request permissions");
         }
     }
 
-    private void startVgsFile(String fileName) {
-        try {
-            ScriptManager scriptManager = new ScriptManager(scriptRoot);
-            scriptManager.loadAndExecuteScript(fileName);
-            Toast.makeText(this, "启动脚本: " + fileName, Toast.LENGTH_SHORT).show();
-        } catch (ScriptErrorException e) {
-            Toast.makeText(this, "运行脚本时出错: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE) {
+            // 重新检查权限
+            requestPermission();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE) {
+            // 检查权限请求结果
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d("LauncherActivity", "Permissions granted");
+                // 权限已获得，可以进行文件操作
+            } else {
+                Log.d("LauncherActivity", "Permissions denied");
+                // 权限被拒绝，处理相应逻辑
+            }
         }
     }
 }
