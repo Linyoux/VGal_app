@@ -22,16 +22,26 @@
             </intent-filter>
         </activity>
 
-        <!-- 添加 VgsLauncherActivity -->
+        <activity
+                android:name=".MainActivity"
+                android:screenOrientation="landscape"
+                android:exported="true"/>
+
+        <activity
+                android:name=".SaveLoadActivity"
+                android:screenOrientation="landscape"
+                android:exported="true"/>
+
+        <!-- 注册 VgsLauncherActivity -->
         <activity
                 android:name=".VgsLauncherActivity"
-                android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
-
+                android:screenOrientation="landscape"
+                android:exported="true"/>
     </application>
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
 
 </manifest>
