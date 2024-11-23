@@ -1,5 +1,7 @@
 package client.vgal.script;
 
+
+import android.renderscript.Script;
 import client.vgal.script.block.CallBlock;
 import client.vgal.script.block.NormalBlock;
 import client.vgal.script.block.PlayBlock;
@@ -22,43 +24,33 @@ public class ScriptManager {
 
     private ScriptParser scriptParser;
 
-    // 构造函数初始化，但不自动执行脚本
     public ScriptManager(File scriptRoot) {
-        this(scriptRoot, "start.vgs");
+        this(scriptRoot,"start.vgs");
     }
-
-    public ScriptManager(File scriptRoot, String currentScript) {
+    public ScriptManager(File scriptRoot,String currentScript) {
         this.scriptRoot = scriptRoot;
         this.currentScript = currentScript;
-        this.scriptParser = new DefaultScriptParser();
+        scriptParser = new DefaultScriptParser();
     }
 
-    // 解析并执行指定的脚本
-    public void loadAndExecuteScript(String scriptName) throws ScriptErrorException {
-        call(scriptName);
-    }
-
-    // 解析给定脚本并返回脚本块列表
     public List<ScriptBlock> parse(String scriptName) throws ScriptErrorException {
-        String scriptContent = FileUtil.readFileUTF8(new File(scriptRoot, scriptName).getAbsolutePath());
+        String scriptContent = FileUtil.readFileUTF8(new File(scriptRoot,scriptName).getAbsolutePath());
         return scriptParser.parse(scriptContent);
     }
 
-    // 加载当前脚本的块
     public void callCurrent() throws ScriptErrorException {
         call(this.currentScript);
     }
 
-    // 加载指定名称的脚本
-    public void call(String scriptName) throws ScriptErrorException {
+    public void call(String scriptName) throws ScriptErrorException{
         List<ScriptBlock> list = parse(scriptName);
         blocks.clear();
         otherBlocks.clear();
 
-        for (ScriptBlock block : list) {
-            if (block instanceof NormalBlock) {
+        for (ScriptBlock block : list){
+            if (block instanceof NormalBlock){
                 blocks.add(block);
-            } else {
+            }else {
                 otherBlocks.add(block);
             }
         }
@@ -67,89 +59,85 @@ public class ScriptManager {
         currentIndex.set(0);
     }
 
-    // 获取当前脚本块
-    public ScriptBlock getCurrentBlock() {
+    public ScriptBlock getCurrentBlock(){
         return blocks.get(currentIndex.get());
     }
 
-    // 移动到下一个块（通过索引）
-    public ScriptBlock next(int index) {
+    public ScriptBlock next(int index){
         int i = currentIndex.getAndAdd(index);
-        return getBlock(i);
+        ScriptBlock scriptBlock = getBlock(i);
+        return scriptBlock;
     }
 
-    // 移动到前一个块（通过索引）
-    public ScriptBlock prev(int index) {
-        int i = currentIndex.getAndAdd(-index); // 减少索引
-        return getBlock(i);
+    public ScriptBlock prev(int index){
+        int i = currentIndex.getAndAdd(index);
+        ScriptBlock scriptBlock = getBlock(i);
+        return scriptBlock;
     }
 
-    // 移动到下一个块
-    public ScriptBlock next() {
+    public ScriptBlock next(){
         return next(1);
     }
 
-    // 移动到前一个块
-    public ScriptBlock prev() {
+    public ScriptBlock prev(){
         return prev(1);
     }
 
-    // 获取指定索引处的块
-    public ScriptBlock getBlock(int index) {
-        if (index >= blocks.size() || index < 0) {
-            return null; // 确保索引有效
+    public ScriptBlock getBlock(int index){
+        if (index >= blocks.size()){
+            return null;
         }
         return blocks.get(index);
     }
 
-    // 获取当前脚本位置
-    public int getCurrentPosition() {
+    public int getCurrentPosition(){
         return currentIndex.get();
     }
 
-    // 获取当前脚本名称
     public String getCurrentScript() {
         return currentScript;
     }
 
-    // 根据当前时间重置索引
-    public void resetIndex(long currentTime) {
+    public void resetIndex(long currentTime){
+
+        // 遍历JSONArray
         for (int i = 0; i < blocks.size(); i++) {
+            // 获取每个JSONObject
             ScriptBlock scriptBlock = blocks.get(i);
-            if (scriptBlock instanceof NormalBlock) {
+            if (scriptBlock instanceof NormalBlock){
                 NormalBlock normalBlock = (NormalBlock) scriptBlock;
                 long time = (long) (normalBlock.getTime() * 1000);
-                if (time > currentTime) {
-                    currentIndex.set(Math.max(0, i));
+                if (time > currentTime){
+                    currentIndex.set(Math.max(0,i));
                     return;
                 }
             }
+
         }
+
         currentIndex.set(blocks.size() - 1);
     }
 
-    // 手动设置当前位置
-    public void setCurrentPosition(int index) {
+    public void setCurrentPosition(int index){
         currentIndex.set(index);
     }
 
-    // 获取脚本中的 PlayBlock
-    public PlayBlock getPlayVideo() {
+    public PlayBlock getPlayVideo(){
         for (ScriptBlock block : otherBlocks) {
-            if (block instanceof PlayBlock) {
+            if (block instanceof PlayBlock){
                 return (PlayBlock) block;
             }
         }
         return null;
     }
 
-    // 获取脚本中的下一个 CallBlock
-    public CallBlock getNextCall() {
+    public CallBlock getNextCall(){
         for (ScriptBlock block : otherBlocks) {
-            if (block instanceof CallBlock) {
+            if (block instanceof CallBlock){
                 return (CallBlock) block;
             }
         }
         return null;
     }
+
 }
