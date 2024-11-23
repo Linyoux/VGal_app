@@ -19,13 +19,20 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import client.vgal.saveload.Game;
+import client.vgal.saveload.GameData;
+import client.vgal.saveload.GameDataManager;
 import client.vgal.utils.FileUtil;
+import com.alibaba.fastjson.JSON;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,14 +44,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        if(true){
-            Intent intent = new Intent(this, NativeVideoActivity.class);
-
-        // 启动新的Activity
-            startActivity(intent);
-            return;
-        }
+        requestPermission();
 
         if (getSupportActionBar() != null){
             getSupportActionBar().hide();
@@ -52,18 +52,18 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        requestPermission();
-        startVideoServer();
+
+//        startVideoServer();
 
         webView = findViewById(R.id.webView);
         webView.getSettings().setJavaScriptEnabled(true); // 如果你的HTML需要JavaScript支持
-        webView.getSettings().setDomStorageEnabled(true); // 如果你的HTML需要JavaScript支持
 
 
-        webView.addJavascriptInterface(new WebAppInterface(this), "Android");
+        webView.addJavascriptInterface(new WebAppInterface(this), "VGAL");
 
         WebSettings webSettings = webView.getSettings();
         webSettings.setMediaPlaybackRequiresUserGesture(false);
+        webSettings.setDomStorageEnabled(true);
 
         webView.setWebChromeClient(new WebChromeClient() {
             public boolean onConsoleMessage(ConsoleMessage cm) {
@@ -86,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
             webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
 
-        webView.loadUrl("file:///android_asset/index.html");
+        webView.loadUrl("file:///android_asset/homepage.html");
 
 //        webView.loadUrl("https://v.jstv.com/xw360/");
     }
@@ -100,14 +100,61 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
-        public String getDataPath() {
-            return new File(Environment.getExternalStorageDirectory(),"vgal").getAbsolutePath();
+        public String getGames() {
+            File rootPath = new File(Environment.getExternalStorageDirectory(), "vgal");
+            List<Game> games = new ArrayList<>();
+
+            for (File file : Objects.requireNonNull(rootPath.listFiles())){
+                if(file.isDirectory()){
+                    File startFile = new File(file,"start.vgs");
+                    if (startFile.exists() && startFile.isFile()){
+                        Game game = new Game();
+                        game.setName(file.getName());
+
+                        File iconFile = new File(file,"icon.png");
+                        if(iconFile.exists() && iconFile.isFile()){
+                            game.setIcon(iconFile.getName());
+                        }
+
+                        games.add(game);
+                    }
+                }
+            }
+
+            return JSON.toJSONString(games);
         }
 
         @JavascriptInterface
-        public String getScript() throws IOException {
-            String text =  FileUtil.readFileUTF8(new File(Environment.getExternalStorageDirectory(),"vgal/script.json").getAbsolutePath());
-            return text;
+        public boolean startGame(String game) throws IOException {
+            Intent intent = new Intent(MainActivity.this, NativeVideoActivity.class);
+            // 启动新的Activity
+            File file = new File(Environment.getExternalStorageDirectory(), "vgal/" + game);
+            if (!file.exists()) {
+                return false;
+            }
+            intent.putExtra("rootPath",file);
+            startActivity(intent);
+
+            return true;
+        }
+
+        @JavascriptInterface
+        public boolean openLoadData(String game) throws IOException {
+            Intent intent = new Intent(MainActivity.this, SaveLoadActivity.class);
+            // 启动新的Activity
+            File file = new File(Environment.getExternalStorageDirectory(), "vgal/" + game);
+            if (!file.exists()) {
+                return false;
+            }
+
+            GameDataManager gameDataManager = new GameDataManager(new File(getApplicationContext().getFilesDir(),game));
+            intent.putExtra("rootPath",file);
+            intent.putExtra("game",game);
+            intent.putExtra("isSave",false);
+            intent.putExtra("gameDataManager",gameDataManager);
+            startActivityForResult(intent,1);
+
+            return false;
         }
     }
 
@@ -132,12 +179,37 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-            hideSystemUI();
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1) {
+            if (data.getExtras() != null){
+                //处理读档
+
+                if (data.getExtras() != null){
+                    //处理读档
+                    GameData gameData = (GameData) data.getExtras().get("gameData");
+                    String game = data.getExtras().getString("game");
+                    File file = new File(Environment.getExternalStorageDirectory(), "vgal/" + game);
+                    if (!file.exists()) {
+                        return;
+                    }
+                    Intent intent = new Intent(MainActivity.this, NativeVideoActivity.class);
+                    intent.putExtra("rootPath",file);
+                    intent.putExtra("gameData",gameData);
+                    startActivity(intent);
+                }
+            }
         }
     }
+
+//    @Override
+//    public void onWindowFocusChanged(boolean hasFocus) {
+//        super.onWindowFocusChanged(hasFocus);
+//        if (hasFocus) {
+//            hideSystemUI();
+//        }
+//    }
 
     private void hideSystemUI() {
         View decorView = getWindow().getDecorView();

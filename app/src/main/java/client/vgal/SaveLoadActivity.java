@@ -11,6 +11,7 @@ import android.view.WindowManager;
 import android.webkit.*;
 import androidx.appcompat.app.AppCompatActivity;
 import client.vgal.saveload.GameData;
+import client.vgal.saveload.GameDataManager;
 import com.alibaba.fastjson.JSON;
 
 public class SaveLoadActivity extends AppCompatActivity {
@@ -18,6 +19,10 @@ public class SaveLoadActivity extends AppCompatActivity {
     private WebView webView;
     private boolean save;
     private GameData gameData;
+
+    private String game;
+
+    private GameDataManager gameDataManager;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -27,6 +32,12 @@ public class SaveLoadActivity extends AppCompatActivity {
 
         save = extras.getBoolean("isSave");
         gameData = (GameData) getIntent().getSerializableExtra("gameData");
+        game = extras.getString("game");
+
+        gameDataManager = (GameDataManager) getIntent().getSerializableExtra("gameDataManager");
+        if(gameDataManager == null){
+            gameDataManager = NativeVideoActivity.getGameDataManager();
+        }
 
         // 设置全屏
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -41,7 +52,6 @@ public class SaveLoadActivity extends AppCompatActivity {
 
         webView = findViewById(R.id.webView);
         webView.getSettings().setJavaScriptEnabled(true); // 如果你的HTML需要JavaScript支持
-        webView.getSettings().setDomStorageEnabled(true); // 如果你的HTML需要JavaScript支持
 
 
         webView.addJavascriptInterface(new SaveLoadActivity.WebAppInterface(this), "VGAL");
@@ -92,7 +102,7 @@ public class SaveLoadActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public boolean SaveData(int slot){
-            return NativeVideoActivity.getGameDataManager().SaveData(slot,gameData);
+            return gameDataManager.SaveData(slot,gameData);
         }
 
 
@@ -104,10 +114,11 @@ public class SaveLoadActivity extends AppCompatActivity {
         @JavascriptInterface
         public boolean LoadData(int slot){
             try {
-                GameData gameData = NativeVideoActivity.getGameDataManager().LoadData(slot);
+                GameData gameData = gameDataManager.LoadData(slot);
 
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("gameData",gameData);
+                resultIntent.putExtra("game",game);
                 setResult(Activity.RESULT_OK, resultIntent);
                 finish();
                 return true;
@@ -119,7 +130,7 @@ public class SaveLoadActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public String getSaveData(){
-            return JSON.toJSONString(NativeVideoActivity.getGameDataManager().getSaveData2());
+            return JSON.toJSONString(gameDataManager.getSaveData2());
         }
 
 

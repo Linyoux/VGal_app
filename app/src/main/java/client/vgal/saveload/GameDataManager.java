@@ -10,11 +10,13 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Type;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GameDataManager {
+public class GameDataManager implements Serializable {
 
     private File savePath;
 
@@ -41,10 +43,13 @@ public class GameDataManager {
     public boolean SaveData(int slot,GameData gameData){
         try{
             File file = new File(savePath,"gameData.json");
+            gameData.setSaveTime(LocalDateTime.now());
+
             Map<Integer,GameData> map = getSaveData();
             map.put(slot,gameData);
 
             if(!file.exists()){
+                savePath.mkdirs();
                 file.createNewFile();
             }
 

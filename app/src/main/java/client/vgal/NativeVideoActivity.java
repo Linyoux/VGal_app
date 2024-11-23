@@ -85,8 +85,11 @@ public class NativeVideoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_nativevideo);
         requestPermission();
 
-        root = new File(Environment.getExternalStorageDirectory(), "vgal/");
-        gameDataManager = new GameDataManager(getApplicationContext().getFilesDir());
+        Bundle extras = getIntent().getExtras();
+        root = (File) extras.get("rootPath");
+        GameData gameData = (GameData) extras.get("gameData");
+
+        gameDataManager = new GameDataManager(new File(getApplicationContext().getFilesDir(),root.getName()));
         scriptManager = new ScriptManager(root);
         try {
             scriptManager.callCurrent();
@@ -95,7 +98,6 @@ public class NativeVideoActivity extends AppCompatActivity {
             handleScriptError(e);
         }
 
-        readScripts();
 
         // 设置全屏
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -112,8 +114,6 @@ public class NativeVideoActivity extends AppCompatActivity {
 
         player = new ExoPlayer.Builder(this).build();
         playerView.setPlayer(player);
-
-
         setVideoUrl();
 
 
@@ -137,6 +137,11 @@ public class NativeVideoActivity extends AppCompatActivity {
                 }
             }
         });
+        if (gameData != null){
+            loadData(gameData);
+        }else{
+            readScripts();
+        }
 
         player.prepare();
         player.play(); // 自动开始播放
@@ -369,6 +374,28 @@ public class NativeVideoActivity extends AppCompatActivity {
         }
     }
 
+    private void loadData(GameData gameData){
+        if (gameData != null){
+            if(!gameData.getScriptName().equals(scriptManager.getCurrentScript())){
+                try {
+                    scriptManager.call(gameData.getScriptName());
+                    setVideoUrl();
+                } catch (ScriptErrorException e) {
+                    e.printStackTrace();
+                    handleScriptError(e);
+                }
+
+            }
+
+            scriptManager.setCurrentPosition(gameData.getCurrentIndex());
+            int prevIndex = Math.max(0,scriptManager.getCurrentPosition() - 1);
+
+            player.seekTo((long) (((NormalBlock)scriptManager.getBlock(prevIndex)).getTime() * 1000));
+            player.play();
+
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -383,25 +410,7 @@ public class NativeVideoActivity extends AppCompatActivity {
             if (data.getExtras() != null){
                 //处理读档
                 GameData gameData = (GameData) data.getExtras().get("gameData");
-                if (gameData != null){
-                    if(!gameData.getScriptName().equals(scriptManager.getCurrentScript())){
-                        try {
-                            scriptManager.call(gameData.getScriptName());
-                            setVideoUrl();
-                        } catch (ScriptErrorException e) {
-                            e.printStackTrace();
-                            handleScriptError(e);
-                        }
-
-                    }
-
-                    scriptManager.setCurrentPosition(gameData.getCurrentIndex());
-                    int prevIndex = Math.max(0,scriptManager.getCurrentPosition() - 1);
-
-                    player.seekTo((long) (((NormalBlock)scriptManager.getBlock(prevIndex)).getTime() * 1000));
-                    player.play();
-
-                }
+                loadData(gameData);
             }
 
         }
