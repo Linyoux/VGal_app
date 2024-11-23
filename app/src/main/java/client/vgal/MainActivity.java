@@ -57,7 +57,8 @@ public class MainActivity extends AppCompatActivity {
 
         webView = findViewById(R.id.webView);
         webView.getSettings().setJavaScriptEnabled(true); // 如果你的HTML需要JavaScript支持
-
+        webView.getSettings().setAllowFileAccess(true);
+        webView.getSettings().setAllowContentAccess(true);
 
         webView.addJavascriptInterface(new WebAppInterface(this), "VGAL");
 
@@ -113,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
 
                         File iconFile = new File(file,"icon.png");
                         if(iconFile.exists() && iconFile.isFile()){
-                            game.setIcon(iconFile.getName());
+                            game.setIcon(iconFile.getAbsolutePath());
                         }
 
                         games.add(game);
