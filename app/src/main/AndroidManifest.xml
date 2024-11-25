@@ -37,6 +37,10 @@
                 android:name=".SaveLoadActivity"
                 android:screenOrientation="landscape"
                 android:exported="true"/>
+        <activity
+                android:name=".BackLogActivity"
+                android:screenOrientation="landscape"
+                android:exported="true"/>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET"/>

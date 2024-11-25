@@ -335,6 +335,7 @@
 
                     const img = document.createElement('img');
                     img.src = game.icon || DEFAULT_ICON;
+                    console.log(img.src)
                     img.alt = game.name;
                     img.onerror = () => img.src = DEFAULT_ICON;
 
