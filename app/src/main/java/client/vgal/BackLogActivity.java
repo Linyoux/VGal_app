@@ -10,40 +10,32 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.webkit.*;
 import androidx.appcompat.app.AppCompatActivity;
-import client.vgal.game.GameData;
-import client.vgal.game.GameDataManager;
+import client.vgal.game.BackLog;
+import client.vgal.game.LogText;
+import client.vgal.script.block.NormalBlock;
+import client.vgal.script.block.ScriptBlock;
 import com.alibaba.fastjson.JSON;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
-public class SaveLoadActivity extends AppCompatActivity {
-
+public class BackLogActivity extends AppCompatActivity {
     private WebView webView;
-    private boolean save;
-    private GameData gameData;
-
-    private String game;
-
-    private GameDataManager gameDataManager;
 
     private String rootPath;
+    private boolean playing;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Bundle extras = getIntent().getExtras();
-
-        save = extras.getBoolean("isSave");
-        gameData = (GameData) getIntent().getSerializableExtra("gameData");
-        game = extras.getString("game");
         rootPath = extras.getString("rootPath");
+        playing = extras.getBoolean("playing");
 
-        gameDataManager = (GameDataManager) getIntent().getSerializableExtra("gameDataManager");
-        if(gameDataManager == null){
-            gameDataManager = NativeVideoActivity.getGameDataManager();
-        }
-`
         // 设置全屏
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
@@ -60,7 +52,7 @@ public class SaveLoadActivity extends AppCompatActivity {
         webView.getSettings().setAllowFileAccess(true);
         webView.getSettings().setAllowContentAccess(true);
 
-        webView.addJavascriptInterface(new SaveLoadActivity.WebAppInterface(this), "VGAL");
+        webView.addJavascriptInterface(new BackLogActivity.WebAppInterface(this), "VGAL");
 
         WebSettings webSettings = webView.getSettings();
         webSettings.setMediaPlaybackRequiresUserGesture(false);
@@ -86,27 +78,12 @@ public class SaveLoadActivity extends AppCompatActivity {
             webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
 
-        if (save){
-            File saveFile = new File(rootPath, "gui/save.html");
-            if (saveFile.exists() && saveFile.isFile()) {
-                webView.loadUrl(saveFile.getAbsolutePath());
-            }else {
-                webView.loadUrl("file:///android_asset/save.html");
-            }
+        File backLogFile = new File(rootPath, "gui/backlog.html");
+        if (backLogFile.exists() && backLogFile.isFile()){
+            webView.loadUrl(backLogFile.getAbsolutePath());
         }else {
-            File loadFile = new File(rootPath, "gui/load.html");
-            if (loadFile.exists() && loadFile.isFile()) {
-                webView.loadUrl(loadFile.getAbsolutePath());
-            }else {
-                webView.loadUrl("file:///android_asset/load.html");
-            }
+            webView.loadUrl("file:///android_asset/backlog.html");
         }
-    }
-    @Override
-    public void onBackPressed() {
-        Intent resultIntent = new Intent();
-        setResult(Activity.RESULT_OK, resultIntent); // 设置结果码
-        finish();
     }
 
     public class WebAppInterface {
@@ -117,45 +94,48 @@ public class SaveLoadActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
-        public boolean SaveData(int slot){
-            return gameDataManager.SaveData(slot,gameData);
-        }
-
-
-        @JavascriptInterface
-        public void Close(){
-            onBackPressed();
-        }
-
-        @JavascriptInterface
-        public boolean LoadData(int slot){
-            try {
-                GameData gameData = gameDataManager.LoadData(slot);
-
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra("gameData",gameData);
-                resultIntent.putExtra("game",game);
-                setResult(Activity.RESULT_OK, resultIntent);
-                finish();
-                return true;
-            }catch (Exception e){
-                e.printStackTrace();
-                return false;
+        public String getBackLog(int page){
+            if(page <= 0){
+                return null;
             }
+
+            int pageSize = 10;
+
+            BackLog backLog = new BackLog();
+            backLog.setPage(page);
+
+            int currentPosition = NativeVideoActivity.getScriptManager().getCurrentPosition();
+            currentPosition = playing ? currentPosition : currentPosition - 1;
+            int index = currentPosition - (pageSize * (page - 1));
+            int startIndex = Math.max(0,index - pageSize);
+
+            List<ScriptBlock> list = NativeVideoActivity.getScriptManager().rangeGet(startIndex,index);
+            if (list == null){
+                return null;
+            }
+            AtomicInteger num = new AtomicInteger(startIndex);
+            List<LogText> texts = list.stream().map(scriptBlock -> {
+                NormalBlock block = (NormalBlock) scriptBlock;
+                LogText logText = new LogText();
+                logText.setText(block.getText());
+                logText.setPos(num.getAndIncrement());
+                return logText;
+            }).collect(Collectors.toList());
+//            Collections.reverse(texts);
+            int maxPage = (currentPosition + 1) / pageSize;
+            maxPage = (currentPosition + 1) % pageSize == 0 ? maxPage : maxPage + 1;
+            backLog.setMaxPage(maxPage);
+            backLog.setTexts(texts);
+            return JSON.toJSONString(backLog);
         }
 
         @JavascriptInterface
-        public String getSaveData(){
-            return JSON.toJSONString(gameDataManager.getSaveData2());
+        public boolean backTo(int pos){
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("backPos",pos);
+            setResult(Activity.RESULT_OK, resultIntent);
+            finish();
+            return true;
         }
-
-
     }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
-
 }

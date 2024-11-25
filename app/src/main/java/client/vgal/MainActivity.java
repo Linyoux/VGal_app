@@ -11,25 +11,19 @@ import android.os.Environment;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.webkit.*;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import client.vgal.saveload.Game;
-import client.vgal.saveload.GameData;
-import client.vgal.saveload.GameDataManager;
-import client.vgal.utils.FileUtil;
+import client.vgal.game.Game;
+import client.vgal.game.GameData;
+import client.vgal.game.GameDataManager;
 import com.alibaba.fastjson.JSON;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -149,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             GameDataManager gameDataManager = new GameDataManager(new File(getApplicationContext().getFilesDir(),game));
-            intent.putExtra("rootPath",file);
+            intent.putExtra("rootPath",file.getAbsolutePath());
             intent.putExtra("game",game);
             intent.putExtra("isSave",false);
             intent.putExtra("gameDataManager",gameDataManager);

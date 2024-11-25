@@ -26,8 +26,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import client.vgal.saveload.GameData;
-import client.vgal.saveload.GameDataManager;
+import client.vgal.game.GameData;
+import client.vgal.game.GameDataManager;
 import client.vgal.script.ScriptErrorException;
 import client.vgal.script.ScriptManager;
 import client.vgal.script.block.CallBlock;
@@ -63,6 +63,7 @@ public class NativeVideoActivity extends AppCompatActivity {
     private Button loadButton;
     private Button backPrevButton;
     private Button exitButton;
+    private Button backlogButton;
 
     private NavigationView navigationView;
     private DrawerLayout drawerLayout;
@@ -75,7 +76,7 @@ public class NativeVideoActivity extends AppCompatActivity {
     Uri videouri;
     static GameDataManager gameDataManager;
 
-    private ScriptManager scriptManager;
+    private static ScriptManager scriptManager;
     File root;
 
     @SuppressLint("ClickableViewAccessibility")
@@ -134,6 +135,8 @@ public class NativeVideoActivity extends AppCompatActivity {
                         }
                     }
 
+                }else if (playbackState == Player.STATE_READY){
+                    player.play();
                 }
             }
         });
@@ -144,7 +147,7 @@ public class NativeVideoActivity extends AppCompatActivity {
         }
 
         player.prepare();
-        player.play(); // 自动开始播放
+//        player.play(); // 自动开始播放
 
 
         // 创建一个Runnable，检查视频播放位置
@@ -209,11 +212,18 @@ public class NativeVideoActivity extends AppCompatActivity {
             }
             return true;
         };
+
+
         // 设置点击监听
         playerView.setOnTouchListener(listener);
 
-
         initRightButtons();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
     }
 
     private void setVideoUrl() {
@@ -237,8 +247,10 @@ public class NativeVideoActivity extends AppCompatActivity {
         loadButton = findViewById(R.id.load);
         backPrevButton = findViewById(R.id.backPrev);
         exitButton = findViewById(R.id.exit);
+        backlogButton = findViewById(R.id.backlog);
 
         @SuppressLint("NonConstantResourceId") View.OnClickListener listener= (event)->{
+            Intent intent;
             switch (event.getId()){
                 case R.id.autoMode:
                     autoMode = true;
@@ -247,10 +259,13 @@ public class NativeVideoActivity extends AppCompatActivity {
                         gamestatusText.setVisibility(View.VISIBLE);
                     });
 
+                    drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+
                     player.play();
                     break;
                 case R.id.skipMode:
                     player.play();
+                    drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
                     statushandler.post(() -> {
                         gamestatusText.setText("快进模式");
                         PlaybackParameters params = new PlaybackParameters(1000, 1);
@@ -301,15 +316,28 @@ public class NativeVideoActivity extends AppCompatActivity {
                     gameData.setScriptName(scriptManager.getCurrentScript());
                     gameData.setBmpPath(getCurrentFrameAsBase64());
 
-                    Intent intent = new Intent(this, SaveLoadActivity.class);
+                    intent = new Intent(this, SaveLoadActivity.class);
 
                     boolean isSave = event.getId() == R.id.save;
 
                     intent.putExtra("isSave",isSave);
+                    intent.putExtra("rootPath",root.getAbsolutePath());
                     intent.putExtra("gameData",gameData);
                     // 启动新的Activity
                     startActivityForResult(intent,1);
 
+                    break;
+                case R.id.backlog:
+                    intent = new Intent(this, BackLogActivity.class);
+                    intent.putExtra("playing",player.isPlaying());
+                    if(player.isPlaying()){
+                        jumpBeforePlaying = true;
+                        player.pause();
+                    }
+
+
+                    intent.putExtra("rootPath",root.getAbsolutePath());
+                    startActivityForResult(intent,2);
                     break;
                 default:
                     ToastUtils.showToast(getApplicationContext(),"开发中");
@@ -324,6 +352,7 @@ public class NativeVideoActivity extends AppCompatActivity {
         loadButton.setOnClickListener(listener);
         backPrevButton.setOnClickListener(listener);
         exitButton.setOnClickListener(listener);
+        backlogButton.setOnClickListener(listener);
     }
 
     public void readScripts() {
@@ -347,6 +376,7 @@ public class NativeVideoActivity extends AppCompatActivity {
             autoMode = false;
             resetIndex();
             gamestatusText.setVisibility(View.INVISIBLE);
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
             return true;
         }
         return false;
@@ -367,6 +397,11 @@ public class NativeVideoActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        if(autoMode || skipMode){
+            drawerLayout.closeDrawer(GravityCompat.END);
+            return;
+        }
+
         if (drawerLayout.isDrawerOpen(GravityCompat.END)) {  // 检查右侧的Drawer是否打开
             drawerLayout.closeDrawer(GravityCompat.END);  // 如果打开了，则关闭
         } else {
@@ -400,19 +435,30 @@ public class NativeVideoActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == 1 ) {
+        if (jumpBeforePlaying){
+            player.play();
+            jumpBeforePlaying = false;
+        }
 
-            if (jumpBeforePlaying){
-                player.play();
-                jumpBeforePlaying = false;
-            }
+        switch (requestCode) {
+            case 1:
+                if (data.getExtras() != null){
+                    //处理读档
+                    GameData gameData = (GameData) data.getExtras().get("gameData");
+                    loadData(gameData);
+                }
+                break;
+            case 2:
+                if (data != null && data.getExtras() != null){
+                    //处理读档
+                    int pos = data.getExtras().getInt("backPos");
+                    scriptManager.setCurrentPosition(pos);
 
-            if (data.getExtras() != null){
-                //处理读档
-                GameData gameData = (GameData) data.getExtras().get("gameData");
-                loadData(gameData);
-            }
-
+                    int prevIndex = Math.max(0,scriptManager.getCurrentPosition() - 1);
+                    player.seekTo((long) (((NormalBlock)scriptManager.getBlock(prevIndex)).getTime() * 1000));
+                    player.play();
+                }
+                break;
         }
     }
 
@@ -506,5 +552,9 @@ public class NativeVideoActivity extends AppCompatActivity {
 
     public static GameDataManager getGameDataManager() {
         return gameDataManager;
+    }
+
+    public static ScriptManager getScriptManager() {
+        return scriptManager;
     }
 }

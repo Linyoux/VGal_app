@@ -73,6 +73,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     style="?android:attr/buttonStyleSmall"
+                    android:id="@+id/backlog"
+                    android:text="日志" tools:ignore="HardcodedText"/>
+            <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="?android:attr/buttonStyleSmall"
                     android:id="@+id/backPrev"
                     android:text="回退" tools:ignore="HardcodedText"/>
             <Button

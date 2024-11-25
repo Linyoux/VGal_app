@@ -140,4 +140,20 @@ public class ScriptManager {
         return null;
     }
 
+    public int getSize(){
+        return blocks.size();
+    }
+
+    public List<ScriptBlock> rangeGet(int start,int end){
+        if (start<0 || end >= getSize() - 1){
+            return null;
+        }
+
+        ArrayList<ScriptBlock> list = new ArrayList<>();
+        for (int i = start;i <= end;i++){
+            list.add(getBlock(i));
+        }
+        return list;
+    }
+
 }
