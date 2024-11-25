@@ -43,7 +43,7 @@ public class SaveLoadActivity extends AppCompatActivity {
         if(gameDataManager == null){
             gameDataManager = NativeVideoActivity.getGameDataManager();
         }
-`
+
         // 设置全屏
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
