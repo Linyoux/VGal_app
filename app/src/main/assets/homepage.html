@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VGal 游戏启动器</title>
+    <!-- 链接到我们创建的统一主题样式表 -->
     <link rel="stylesheet" href="theme.css">
     <style>
+        /* homepage 特有的样式微调 */
         .card-grid {
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         }
@@ -17,12 +19,28 @@
             display: flex;
             gap: 10px;
             padding: 15px;
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+            background: linear-gradient(to top, rgba(17, 24, 39, 0.95) 0%, rgba(17, 24, 39, 0) 100%);
             transform: translateY(100%);
             transition: transform var(--transition-speed) ease;
+            /* 默认隐藏，悬停时显示 */
+            opacity: 0;
         }
         .card:hover .card-actions {
             transform: translateY(0);
+            opacity: 1;
+        }
+        .card-title-wrapper {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: linear-gradient(to top, rgba(17, 24, 39, 0.85) 0%, rgba(17, 24, 39, 0) 80%);
+            transition: transform var(--transition-speed) ease;
+        }
+        .card:hover .card-title-wrapper {
+            /* 悬停时，标题向上移动，为操作按钮腾出空间 */
+            transform: translateY(-60px); /* 向上移动的高度约等于按钮区域高度 */
         }
     </style>
 </head>
@@ -36,7 +54,8 @@
     </div>
 
     <script>
-        const DEFAULT_ICON_BG = 'about:blank'; // 使用空白背景代替占位图
+        // 定义一个空白的图片背景，用于加载失败或无封面的情况
+        const DEFAULT_ICON_BG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
         document.addEventListener('DOMContentLoaded', () => {
             loadGames();
@@ -49,7 +68,6 @@
             container.innerHTML = '';
             loadingIndicator.style.display = 'block';
 
-            // 使用setTimeout模拟异步加载，给原生代码响应时间
             setTimeout(() => {
                 try {
                     const games = JSON.parse(VGAL.getGames());
@@ -63,19 +81,28 @@
                     games.forEach(game => {
                         const card = document.createElement('div');
                         card.className = 'card';
+                        // 注意：卡片的直接点击事件是启动游戏，提供快速操作
                         card.onclick = () => VGAL.startGame(game.name);
 
                         const img = document.createElement('img');
                         img.className = 'card-image';
-                        img.src = game.icon ? `file://${game.icon}` : DEFAULT_ICON_BG;
-                        img.alt = game.name;
+                        
+                        // ======================================================
+                        //  FIX: 恢复到你之前能正常工作的图片加载逻辑
+                        //  WebView可以直接处理Java传来的绝对路径
+                        // ======================================================
+                        img.src = game.icon || DEFAULT_ICON_BG;
+                        
+                        // 增强的错误处理和调试信息
+                        console.log(`[VGal] Loading icon for '${game.name}': ${img.src}`);
                         img.onerror = () => { 
+                            console.error(`[VGal] FAILED to load icon: ${game.icon}`);
                             img.src = DEFAULT_ICON_BG; 
-                            img.style.backgroundColor = '#000';
+                            img.style.backgroundColor = '#000'; // 加载失败时显示黑色背景
                         };
 
-                        const body = document.createElement('div');
-                        body.className = 'card-body';
+                        const titleWrapper = document.createElement('div');
+                        titleWrapper.className = 'card-title-wrapper';
                         
                         const title = document.createElement('h3');
                         title.className = 'card-title';
@@ -86,10 +113,10 @@
 
                         const startButton = document.createElement('button');
                         startButton.className = 'btn btn-primary';
-                        startButton.textContent = '启动游戏';
-                        startButton.style.flex = '2'; // 占据更多空间
+                        startButton.textContent = '启动';
+                        startButton.style.flex = '2';
                         startButton.onclick = (e) => {
-                            e.stopPropagation();
+                            e.stopPropagation(); // 阻止事件冒泡到卡片上
                             VGAL.startGame(game.name);
                         };
 
@@ -98,17 +125,17 @@
                         loadButton.textContent = '读档';
                         loadButton.style.flex = '1';
                         loadButton.onclick = (e) => {
-                            e.stopPropagation();
+                            e.stopPropagation(); // 阻止事件冒泡
                             VGAL.openLoadData(game.name);
                         };
 
                         actions.appendChild(startButton);
-actions.appendChild(loadButton);
+                        actions.appendChild(loadButton);
 
-                        body.appendChild(title);
+                        titleWrapper.appendChild(title);
                         card.appendChild(img);
-                        card.appendChild(body);
-                        card.appendChild(actions); // 将按钮层放在最上
+                        card.appendChild(titleWrapper); // 标题层
+                        card.appendChild(actions);     // 按钮层
                         container.appendChild(card);
                     });
                 } catch (e) {
@@ -116,7 +143,7 @@ actions.appendChild(loadButton);
                     container.innerHTML = `<p style="text-align:center; color: var(--danger-color);">加载游戏列表时出错: ${e.message}</p>`;
                     console.error(e);
                 }
-            }, 100); // 延迟100毫秒执行
+            }, 100);
         }
     </script>
 </body>
