@@ -1,186 +1,223 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>历史文本界面</title>
+    <title>游戏回想</title>
     <style>
+        :root {
+            --bg-gradient-start: #1a202c;
+            --bg-gradient-end: #2d3748;
+            --card-bg: rgba(45, 55, 72, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --card-hover-bg: rgba(74, 85, 104, 0.8);
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --primary-accent: #4299e1;
+            --primary-accent-hover: #2b6cb0;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            color: var(--text-primary);
             margin: 0;
-            padding: 0;
             height: 100vh;
+            overflow: hidden;
+        }
+
+        .main-container {
             display: flex;
             flex-direction: column;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #2c3e50;
+            height: 100%;
+            padding: 24px;
+            box-sizing: border-box;
         }
 
-        #textDisplay {
-            flex: 1;
-            margin: 20px;
-            padding: 20px;
-            overflow-y: auto;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
-            backdrop-filter: blur(4px);
-        }
-
-        #textDisplay::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #textDisplay::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 4px;
-        }
-
-        #textDisplay::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 4px;
-        }
-
-        .textItem {
+        .title-bar {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s, box-shadow 0.2s;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--card-border);
+            flex-shrink: 0;
         }
 
-        .textItem:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .title {
+            font-size: 28px;
+            font-weight: 600;
         }
 
-        .jumpButton {
+        .btn {
             padding: 8px 16px;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
             cursor: pointer;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 6px;
+            font-size: 14px;
             font-weight: 500;
-            transition: transform 0.2s, opacity 0.2s;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+        .btn:hover {
+            background: var(--primary-accent);
+            border-color: var(--primary-accent);
+        }
+        
+        .content-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 10px;
         }
 
-        .jumpButton:hover {
-            transform: translateY(-1px);
-            opacity: 0.9;
+        .content-area::-webkit-scrollbar { width: 8px; }
+        .content-area::-webkit-scrollbar-track { background: transparent; }
+        .content-area::-webkit-scrollbar-thumb { background-color: var(--card-border); border-radius: 4px; }
+        .content-area::-webkit-scrollbar-thumb:hover { background-color: var(--primary-accent); }
+
+        .backlog-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding-bottom: 24px;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .log-item {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.2s ease-in-out;
+            backdrop-filter: blur(8px);
+            cursor: pointer;
         }
-
-        .textItem {
-            animation: fadeIn 0.3s ease-out forwards;
+        .log-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-color: var(--primary-accent);
+            background: var(--card-hover-bg);
         }
-
-        #loadingIndicator {
-            text-align: center;
-            padding: 10px;
-            color: #667eea;
-            font-weight: bold;
-            display: none;
+        .log-text {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .pagination {
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--card-border);
+        }
+        .page-info {
+            margin: 0 20px;
+            font-size: 16px;
+        }
+        .pagination .btn[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--card-bg);
         }
     </style>
 </head>
 <body>
-    <div id="loadingIndicator">加载中...</div>
-    <div id="textDisplay"></div>
+    <div class="main-container">
+        <div class="title-bar">
+            <h1 class="title">游戏回想</h1>
+            <button class="btn" onclick="handleClose()">返回游戏</button>
+        </div>
+        <div class="content-area">
+            <div class="backlog-list" id="backlog-list">
+                <!-- Log items will be dynamically inserted here -->
+            </div>
+        </div>
+        <div class="pagination" id="pagination">
+            <button id="prev-button" class="btn" disabled>上一页</button>
+            <span id="page-info" class="page-info">第 1 / 1 页</span>
+            <button id="next-button" class="btn">下一页</button>
+        </div>
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const textDisplay = document.getElementById('textDisplay');
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            
-            let currentPage = 1;
-            let maxPage = 1;
-            let isLoading = false;
-            let allTexts = new Map(); // 使用 Map 来存储和追踪所有文本，以 pos 为 key
+        let currentPage = 1;
+        let maxPage = 1;
 
-            function createTextItem(item, index) {
-                return `
-                    <div class="textItem" style="animation-delay: ${index * 0.05}s">
-                        <span>${item.text}</span>
-                        <button class="jumpButton" onclick="VGAL.backTo(${item.pos})">跳转</button>
-                    </div>
-                `;
+        function renderLogs(logData) {
+            const list = document.getElementById('backlog-list');
+            list.innerHTML = '';
+
+            if (!logData || !logData.texts || logData.texts.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">没有历史记录。</p>';
+                return;
             }
 
-            function updateDisplay(newTexts, prepend = false) {
-                const newContent = newTexts.map(createTextItem).join('');
-                if (prepend) {
-                    const scrollHeight = textDisplay.scrollHeight;
-                    textDisplay.insertAdjacentHTML('afterbegin', newContent);
-                    textDisplay.scrollTop = textDisplay.scrollHeight - scrollHeight;
-                } else {
-                    textDisplay.insertAdjacentHTML('beforeend', newContent);
-                    textDisplay.scrollTop = textDisplay.scrollHeight;
-                }
-            }
+            // The texts are returned from newest to oldest, let's reverse to show oldest first on the page
+            const sortedTexts = logData.texts.sort((a, b) => a.pos - b.pos);
 
-            function removeDuplicates(texts) {
-                const uniqueTexts = [];
-                texts.forEach(text => {
-                    if (!allTexts.has(text.pos)) {
-                        allTexts.set(text.pos, text);
-                        uniqueTexts.push(text);
-                    }
-                });
-                return uniqueTexts;
-            }
-
-            async function fetchData(page, prepend = false) {
-                if (isLoading || page > maxPage || page < 1) return;
+            sortedTexts.forEach(item => {
+                const logItem = document.createElement('div');
+                logItem.className = 'log-item';
+                logItem.onclick = () => VGAL.backTo(item.pos);
                 
-                isLoading = true;
-                loadingIndicator.style.display = 'block';
+                const logText = document.createElement('p');
+                logText.className = 'log-text';
+                logText.textContent = item.text;
 
-                try {
-                    const data = VGAL.getBackLog(page);
-                    const parsedData = JSON.parse(data);
-                    maxPage = parsedData.maxPage;
-                    
-                    // 去重处理
-                    const uniqueTexts = removeDuplicates(parsedData.texts);
-                    
-                    if (uniqueTexts.length > 0) {
-                        updateDisplay(uniqueTexts, prepend);
-                    }
-                    
-                    currentPage = page;
-                } catch (error) {
-                    console.error('Error fetching data:', error);
-                } finally {
-                    isLoading = false;
-                    loadingIndicator.style.display = 'none';
-                }
-            }
-
-            // 添加防抖，避免频繁触发加载
-            let scrollTimeout;
-            textDisplay.addEventListener('scroll', function() {
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(() => {
-                    if (textDisplay.scrollTop === 0) {
-                        const nextPage = currentPage + 1;
-                        if (nextPage <= maxPage) {
-                            fetchData(nextPage, true);
-                        }
-                    }
-                }, 100);
+                logItem.appendChild(logText);
+                list.appendChild(logItem);
             });
+        }
 
-            // 初始加载第一页
-            fetchData(1);
+        function updatePagination() {
+            document.getElementById('page-info').textContent = `第 ${currentPage} / ${maxPage} 页`;
+            document.getElementById('prev-button').disabled = currentPage === 1;
+            document.getElementById('next-button').disabled = currentPage === maxPage;
+        }
+
+        function fetchAndDisplayLogs(page) {
+            try {
+                const dataString = VGAL.getBackLog(page);
+                if (dataString) {
+                    const logData = JSON.parse(dataString);
+                    currentPage = logData.page;
+                    maxPage = logData.maxPage > 0 ? logData.maxPage : 1;
+                    renderLogs(logData);
+                    updatePagination();
+                } else {
+                    renderLogs(null); // Render empty state
+                }
+            } catch (e) {
+                console.error("Failed to parse backlog data:", e);
+                renderLogs(null);
+            }
+        }
+        
+        function handleClose() {
+            // NOTE: The WebAppInterface in BackLogActivity does not have a 'Close' method.
+            // For full functionality, a @JavascriptInterface public void Close() method,
+            // similar to the one in SaveLoadActivity, should be added to BackLogActivity.java.
+            // This would call finish() or onBackPressed().
+            // As a fallback, we use history.back().
+            window.history.back();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndDisplayLogs(1); // Load the first page initially
+
+            document.getElementById('prev-button').onclick = () => {
+                if (currentPage > 1) {
+                    fetchAndDisplayLogs(currentPage - 1);
+                }
+            };
+
+            document.getElementById('next-button').onclick = () => {
+                if (currentPage < maxPage) {
+                    fetchAndDisplayLogs(currentPage + 1);
+                }
+            };
         });
     </script>
 </body>

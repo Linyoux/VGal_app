@@ -4,199 +4,384 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>游戏存档</title>
-    <link rel="stylesheet" href="theme.css">
     <style>
-        body {
-            background-color: var(--bg-main);
-            background-image: 
-                radial-gradient(circle at 10% 20%, var(--save-view-accent) 0%, transparent 40%),
-                radial-gradient(circle at 80% 90%, var(--save-view-accent) 0%, transparent 40%);
+        :root {
+            --bg-gradient-start: #1a202c;
+            --bg-gradient-end: #2d3748;
+            --card-bg: rgba(45, 55, 72, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --card-hover-bg: rgba(74, 85, 104, 0.8);
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --primary-accent: #4299e1;
+            --primary-accent-hover: #2b6cb0;
+            --danger-accent: #e53e3e;
+            --danger-accent-hover: #c53030;
+            --success-accent: #48bb78;
+            --success-accent-hover: #38a169;
         }
-        .page-title { color: var(--primary-color); }
-        .card-grid {
-            grid-template-columns: repeat(5, 1fr);
-            min-height: 400px;
+
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            color: var(--text-primary);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        .title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--card-border);
+            flex-shrink: 0;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+        .btn:hover {
+            background: var(--primary-accent);
+            border-color: var(--primary-accent);
+        }
+        
+        .content-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .content-area::-webkit-scrollbar { width: 8px; }
+        .content-area::-webkit-scrollbar-track { background: transparent; }
+        .content-area::-webkit-scrollbar-thumb { background-color: var(--card-border); border-radius: 4px; }
+        .content-area::-webkit-scrollbar-thumb:hover { background-color: var(--primary-accent); }
+
+        .save-grid {
+            display: grid;
+            gap: 20px;
+            padding-bottom: 24px;
+        }
+
+        .slot-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.2s ease-in-out;
+            backdrop-filter: blur(8px);
+            cursor: pointer;
+        }
+        .slot-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-color: var(--primary-accent);
+        }
+        
+        .thumbnail {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            background-color: var(--bg-gradient-start);
+            border-bottom: 1px solid var(--card-border);
+        }
+        
+        .empty-slot .thumbnail {
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             font-size: 48px;
+             color: var(--text-secondary);
+        }
+
+        .details {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-grow: 1;
+        }
+
+        .slot-info {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: var(--text-secondary);
+            flex-grow: 1;
+        }
+        .script-name {
+            font-size: 12px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .empty-text {
+            text-align: center;
+            color: var(--text-secondary);
+            margin: auto;
+        }
+
+        .pagination {
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--card-border);
+        }
+        .page-info {
+            margin: 0 20px;
+            font-size: 16px;
+        }
+        .pagination .btn[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--card-bg);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: var(--bg-gradient-end);
+            padding: 24px;
+            border: 1px solid var(--card-border);
+            width: 90%;
+            max-width: 400px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .modal-body {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 24px;
+            gap: 12px;
+        }
+        .confirm-button { background-color: var(--success-accent); border-color: var(--success-accent); }
+        .confirm-button:hover { background-color: var(--success-accent-hover); border-color: var(--success-accent-hover); }
+        .cancel-button { background-color: var(--danger-accent); border-color: var(--danger-accent); }
+        .cancel-button:hover { background-color: var(--danger-accent-hover); border-color: var(--danger-accent-hover); }
+        
+        @media (orientation: landscape) {
+            .save-grid { grid-template-columns: repeat(5, 1fr); }
         }
         @media (orientation: portrait) {
-            .card-grid { grid-template-columns: repeat(2, 1fr); }
+            .save-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="page-title">游戏存档</h1>
-        <div id="loading-indicator" style="text-align: center; padding: 40px; display: none;">正在加载...</div>
-        <div class="card-grid" id="slots-grid"></div>
+    <div class="main-container">
+        <div class="title-bar">
+            <h1 class="title" id="page-title">游戏存档</h1>
+            <button class="btn" onclick="VGAL.Close()">返回游戏</button>
+        </div>
+        <div class="content-area">
+            <div class="save-grid" id="slots-grid"></div>
+        </div>
         <div class="pagination" id="pagination">
-            <button class="btn btn-primary" id="prev-button" disabled>上一页</button>
-            <span class="page-info" id="page-info">第 1 / 10 页</span>
-            <button class="btn btn-primary" id="next-button">下一页</button>
+            <button id="prev-button" class="btn" disabled>上一页</button>
+            <span id="page-info" class="page-info">第 1 / 10 页</span>
+            <button id="next-button" class="btn">下一页</button>
         </div>
     </div>
 
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header" id="modal-header">确认覆盖存档</div>
-            <div class="modal-body" id="modal-body">您确定要覆盖这个存档槽吗？此操作不可撤销。</div>
+            <div class="modal-header" id="modal-header">确认操作</div>
+            <div id="modal-body">您确定要覆盖这个存档吗？此操作无法撤销。</div>
             <div class="modal-buttons">
-                <button class="btn btn-danger" id="cancel-button">取消</button>
-                <button class="btn btn-primary" id="confirm-button">确认</button>
+                <button class="btn cancel-button" id="cancel-button">取消</button>
+                <button class="btn confirm-button" id="confirm-button">确认</button>
             </div>
         </div>
     </div>
 
     <script>
-        const SLOTS_PER_PAGE = 10;
-        const TOTAL_PAGES = 10;
+        const totalPages = 10;
+        const itemsPerPage = 10;
         let currentPage = 1;
         let currentSlot = null;
-        let allSavedData = {};
+        let allSaveData = {};
 
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchDataAndRender();
-            setupPaginationListeners();
-            setupModalListeners();
-        });
+        const defaultThumbnail = 'data:image/webp;base64,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';
 
-        function fetchDataAndRender() {
-            const grid = document.getElementById('slots-grid');
-            const loading = document.getElementById('loading-indicator');
-            grid.style.display = 'none';
-            loading.style.display = 'block';
-
-            setTimeout(() => {
-                try {
-                    allSavedData = JSON.parse(VGAL.getSaveData() || '{}');
-                    renderSlotsForPage(currentPage);
-                } catch(e) {
-                    console.error("Failed to get save data:", e);
-                    grid.innerHTML = `<p style="color: var(--danger-color);">读取存档数据失败。</p>`;
-                } finally {
-                    grid.style.display = 'grid';
-                    loading.style.display = 'none';
-                }
-            }, 50);
-        }
-
-        function renderSlotsForPage(page) {
+        function renderSlots() {
             const grid = document.getElementById('slots-grid');
             grid.innerHTML = '';
-
-            const startSlot = (page - 1) * SLOTS_PER_PAGE + 1;
-            const endSlot = startSlot + SLOTS_PER_PAGE - 1;
+            
+            const startSlot = (currentPage - 1) * itemsPerPage + 1;
+            const endSlot = startSlot + itemsPerPage - 1;
 
             for (let i = startSlot; i <= endSlot; i++) {
-                const slotData = allSavedData[i];
+                const slotData = allSaveData[i];
                 const card = document.createElement('div');
-                card.className = 'card';
-                card.dataset.slot = i;
-
-                const img = document.createElement('img');
-                img.className = 'card-image';
-                
-                const body = document.createElement('div');
-                body.className = 'card-body';
-                
-                const title = document.createElement('h3');
-                title.className = 'card-title';
-                
-                const text = document.createElement('p');
-                text.className = 'card-text';
+                card.className = 'slot-card';
+                card.onclick = () => showConfirmationModal(i);
 
                 if (slotData) {
-                    img.src = slotData.bmpPath ? `data:image/png;base64,${slotData.bmpPath}` : 'about:blank';
-                    title.textContent = `存档 ${i}`;
-                    text.textContent = formatDateTime(slotData.saveTime);
-                    card.onclick = () => showConfirmationModal(i, true);
+                    const thumbnail = document.createElement('img');
+                    thumbnail.className = 'thumbnail';
+                    thumbnail.src = "data:image/png;base64," + slotData.bmpPath;
+                    thumbnail.alt = `存档 ${i}`;
+
+                    const details = document.createElement('div');
+                    details.className = 'details';
+                    
+                    const info = document.createElement('div');
+                    info.className = 'slot-info';
+                    info.textContent = `存档 #${i}`;
+                    
+                    const time = document.createElement('div');
+                    time.className = 'timestamp';
+                    time.textContent = new Date(slotData.saveTime).toLocaleString('zh-CN');
+
+                    const script = document.createElement('div');
+                    script.className = 'script-name';
+                    script.textContent = `场景: ${slotData.scriptName}`;
+
+                    details.appendChild(info);
+                    details.appendChild(time);
+                    details.appendChild(script);
+                    card.appendChild(thumbnail);
+                    card.appendChild(details);
                 } else {
-                    img.style.backgroundColor = '#000';
-                    title.textContent = `存档 ${i}`;
-                    text.textContent = '空存档';
-                    card.onclick = () => saveGame(i);
+                    card.classList.add('empty-slot');
+                    const thumbnail = document.createElement('div');
+                    thumbnail.className = 'thumbnail';
+                    thumbnail.innerHTML = '<span>+</span>';
+                    
+                    const details = document.createElement('div');
+                    details.className = 'details';
+
+                    const text = document.createElement('div');
+                    text.className = 'empty-text';
+                    text.textContent = '空存档位';
+                    
+                    details.appendChild(text);
+                    card.appendChild(thumbnail);
+                    card.appendChild(details);
                 }
-                
-                body.appendChild(title);
-                body.appendChild(text);
-                card.appendChild(img);
-                card.appendChild(body);
                 grid.appendChild(card);
             }
-            updatePaginationUI();
         }
-
-        function setupPaginationListeners() {
-            document.getElementById('prev-button').onclick = () => {
-                if (currentPage > 1) { currentPage--; renderSlotsForPage(currentPage); }
-            };
-            document.getElementById('next-button').onclick = () => {
-                if (currentPage < TOTAL_PAGES) { currentPage++; renderSlotsForPage(currentPage); }
-            };
-        }
-
-        function updatePaginationUI() {
-            document.getElementById('page-info').textContent = `第 ${currentPage} / ${TOTAL_PAGES} 页`;
+        
+        function updatePagination() {
+            document.getElementById('page-info').textContent = `第 ${currentPage} / ${totalPages} 页`;
             document.getElementById('prev-button').disabled = currentPage === 1;
-            document.getElementById('next-button').disabled = currentPage === TOTAL_PAGES;
+            document.getElementById('next-button').disabled = currentPage === totalPages;
         }
 
-        function showConfirmationModal(slot, isOverwrite) {
+        function showConfirmationModal(slot) {
             currentSlot = slot;
             const modal = document.getElementById('confirmationModal');
-            document.getElementById('modal-header').textContent = `确认覆盖存档 ${slot}`;
-            document.getElementById('modal-body').textContent = '您确定要覆盖这个存档槽吗？此操作不可撤销。';
             modal.classList.add('show');
         }
 
-        function setupModalListeners() {
+        function hideConfirmationModal() {
             const modal = document.getElementById('confirmationModal');
-            document.getElementById('cancel-button').onclick = () => modal.classList.remove('show');
-            document.getElementById('confirm-button').onclick = () => {
-                modal.classList.remove('show');
-                if (currentSlot !== null) { saveGame(currentSlot); }
-            };
+            modal.classList.remove('show');
+            currentSlot = null;
         }
 
-        function saveGame(slot) {
-            const success = VGAL.SaveData(slot);
-            if (success) { VGAL.Close(); } 
-            else { alert('存档失败！'); }
-        }
-
-        // ======================================================
-        //  FIX: 修复日期时间解析函数
-        // ======================================================
-        function formatDateTime(dateTimeObj) {
-            if (!dateTimeObj || typeof dateTimeObj !== 'object') {
-                return '未知时间';
-            }
-
+        document.addEventListener('DOMContentLoaded', () => {
             try {
-                // fastjson 默认序列化 LocalDateTime 的结构
-                const year = dateTimeObj.year;
-                const month = dateTimeObj.monthValue; // 使用 monthValue 获取数字月份
-                const day = dateTimeObj.dayOfMonth;
-                const hour = dateTimeObj.hour;
-                const minute = dateTimeObj.minute;
-
-                // 检查关键字段是否存在
-                if ([year, month, day, hour, minute].some(v => typeof v === 'undefined')) {
-                    // 如果结构不匹配，尝试打印对象以供调试，并返回错误提示
-                    console.error("Incompatible dateTime object:", dateTimeObj);
-                    return "日期格式错误";
-                }
-
-                // 格式化为 YYYY-MM-DD HH:mm
-                const f_month = String(month).padStart(2, '0');
-                const f_day = String(day).padStart(2, '0');
-                const f_hour = String(hour).padStart(2, '0');
-                const f_minute = String(minute).padStart(2, '0');
-
-                return `${year}-${f_month}-${f_day} ${f_hour}:${f_minute}`;
+                allSaveData = JSON.parse(VGAL.getSaveData());
             } catch (e) {
-                console.error("Error parsing dateTime object:", dateTimeObj, e);
-                return "日期解析异常";
+                console.error("Failed to parse save data:", e);
+                allSaveData = {};
             }
-        }
+
+            renderSlots();
+            updatePagination();
+            
+            document.getElementById('prev-button').onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderSlots();
+                    updatePagination();
+                }
+            };
+            
+            document.getElementById('next-button').onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderSlots();
+                    updatePagination();
+                }
+            };
+
+            document.getElementById('confirm-button').onclick = () => {
+                if (currentSlot !== null) {
+                    const success = VGAL.SaveData(currentSlot);
+                    if (success) {
+                        // Refresh data after saving
+                        try {
+                           allSaveData = JSON.parse(VGAL.getSaveData());
+                        } catch(e) { console.error("Failed to re-parse save data:", e); }
+                        renderSlots();
+                    } else {
+                        alert('存档失败！');
+                    }
+                    hideConfirmationModal();
+                }
+            };
+
+            document.getElementById('cancel-button').onclick = hideConfirmationModal;
+            document.getElementById('confirmationModal').onclick = (e) => {
+                if (e.target.id === 'confirmationModal') {
+                    hideConfirmationModal();
+                }
+            };
+        });
     </script>
 </body>
 </html>
