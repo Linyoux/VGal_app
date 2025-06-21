@@ -15,7 +15,7 @@
         .page-title { color: var(--primary-color); }
         .card-grid {
             grid-template-columns: repeat(5, 1fr);
-            min-height: 400px; /* 防止切换页面时高度塌陷 */
+            min-height: 400px;
         }
         @media (orientation: portrait) {
             .card-grid { grid-template-columns: repeat(2, 1fr); }
@@ -26,9 +26,7 @@
     <div class="container">
         <h1 class="page-title">游戏存档</h1>
         <div id="loading-indicator" style="text-align: center; padding: 40px; display: none;">正在加载...</div>
-        <div class="card-grid" id="slots-grid">
-            <!-- 存档槽将动态添加到这里 -->
-        </div>
+        <div class="card-grid" id="slots-grid"></div>
         <div class="pagination" id="pagination">
             <button class="btn btn-primary" id="prev-button" disabled>上一页</button>
             <span class="page-info" id="page-info">第 1 / 10 页</span>
@@ -77,7 +75,7 @@
                     grid.style.display = 'grid';
                     loading.style.display = 'none';
                 }
-            }, 50); // 短暂延迟以显示加载动画
+            }, 50);
         }
 
         function renderSlotsForPage(page) {
@@ -128,16 +126,10 @@
 
         function setupPaginationListeners() {
             document.getElementById('prev-button').onclick = () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    renderSlotsForPage(currentPage);
-                }
+                if (currentPage > 1) { currentPage--; renderSlotsForPage(currentPage); }
             };
             document.getElementById('next-button').onclick = () => {
-                if (currentPage < TOTAL_PAGES) {
-                    currentPage++;
-                    renderSlotsForPage(currentPage);
-                }
+                if (currentPage < TOTAL_PAGES) { currentPage++; renderSlotsForPage(currentPage); }
             };
         }
 
@@ -160,30 +152,49 @@
             document.getElementById('cancel-button').onclick = () => modal.classList.remove('show');
             document.getElementById('confirm-button').onclick = () => {
                 modal.classList.remove('show');
-                if (currentSlot !== null) {
-                    saveGame(currentSlot);
-                }
+                if (currentSlot !== null) { saveGame(currentSlot); }
             };
         }
 
         function saveGame(slot) {
             const success = VGAL.SaveData(slot);
-            if (success) {
-                VGAL.Close();
-            } else {
-                alert('存档失败！');
-            }
+            if (success) { VGAL.Close(); } 
+            else { alert('存档失败！'); }
         }
 
-        function formatDateTime(dateTimeStr) {
-            if (!dateTimeStr) return '未知时间';
+        // ======================================================
+        //  FIX: 修复日期时间解析函数
+        // ======================================================
+        function formatDateTime(dateTimeObj) {
+            if (!dateTimeObj || typeof dateTimeObj !== 'object') {
+                return '未知时间';
+            }
+
             try {
-                const dt = dateTimeStr;
-                const date = `${dt.date.year}-${String(dt.date.month).padStart(2, '0')}-${String(dt.date.day).padStart(2, '0')}`;
-                const time = `${String(dt.time.hour).padStart(2, '0')}:${String(dt.time.minute).padStart(2, '0')}`;
-                return `${date} ${time}`;
+                // fastjson 默认序列化 LocalDateTime 的结构
+                const year = dateTimeObj.year;
+                const month = dateTimeObj.monthValue; // 使用 monthValue 获取数字月份
+                const day = dateTimeObj.dayOfMonth;
+                const hour = dateTimeObj.hour;
+                const minute = dateTimeObj.minute;
+
+                // 检查关键字段是否存在
+                if ([year, month, day, hour, minute].some(v => typeof v === 'undefined')) {
+                    // 如果结构不匹配，尝试打印对象以供调试，并返回错误提示
+                    console.error("Incompatible dateTime object:", dateTimeObj);
+                    return "日期格式错误";
+                }
+
+                // 格式化为 YYYY-MM-DD HH:mm
+                const f_month = String(month).padStart(2, '0');
+                const f_day = String(day).padStart(2, '0');
+                const f_hour = String(hour).padStart(2, '0');
+                const f_minute = String(minute).padStart(2, '0');
+
+                return `${year}-${f_month}-${f_day} ${f_hour}:${f_minute}`;
             } catch (e) {
-                return "日期解析错误";
+                console.error("Error parsing dateTime object:", dateTimeObj, e);
+                return "日期解析异常";
             }
         }
     </script>
