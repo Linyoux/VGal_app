@@ -4,32 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>游戏读档</title>
-    <!-- 链接到统一的主题样式表 -->
     <link rel="stylesheet" href="theme.css">
     <style>
-        /* 读档界面特定的样式 */
         body {
             background-color: var(--bg-main);
             background-image: 
                 radial-gradient(circle at 10% 80%, var(--load-view-accent) 0%, transparent 40%),
                 radial-gradient(circle at 90% 10%, var(--load-view-accent) 0%, transparent 40%);
         }
-        .page-title {
-            color: var(--secondary-color);
-        }
+        .page-title { color: var(--secondary-color); }
         .card-grid {
-            /* 横屏5列，竖屏2列 */
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        }
-        @media (orientation: landscape) {
-            .card-grid {
-                grid-template-columns: repeat(5, 1fr);
-            }
+            grid-template-columns: repeat(5, 1fr);
+            min-height: 400px; /* 防止切换页面时高度塌陷 */
         }
         @media (orientation: portrait) {
-            .card-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+            .card-grid { grid-template-columns: repeat(2, 1fr); }
         }
         .card.is-empty {
             opacity: 0.5;
@@ -45,12 +34,17 @@
 <body>
     <div class="container">
         <h1 class="page-title">游戏读档</h1>
+        <div id="loading-indicator" style="text-align: center; padding: 40px; display: none;">正在加载...</div>
         <div class="card-grid" id="slots-grid">
             <!-- 读档槽将动态添加到这里 -->
         </div>
+        <div class="pagination" id="pagination">
+            <button class="btn btn-secondary" id="prev-button" disabled>上一页</button>
+            <span class="page-info" id="page-info">第 1 / 10 页</span>
+            <button class="btn btn-secondary" id="next-button">下一页</button>
+        </div>
     </div>
 
-    <!-- 确认操作的模态弹窗 -->
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
             <div class="modal-header" id="modal-header">确认读取存档</div>
@@ -65,21 +59,45 @@
     <script>
         const SLOTS_PER_PAGE = 10;
         const TOTAL_PAGES = 10;
+        let currentPage = 1;
         let currentSlot = null;
+        let allSavedData = {};
 
         document.addEventListener('DOMContentLoaded', () => {
-            renderSlots();
+            fetchDataAndRender();
+            setupPaginationListeners();
             setupModalListeners();
         });
 
-        function renderSlots() {
+        function fetchDataAndRender() {
+            const grid = document.getElementById('slots-grid');
+            const loading = document.getElementById('loading-indicator');
+            grid.style.display = 'none';
+            loading.style.display = 'block';
+
+            setTimeout(() => {
+                try {
+                    allSavedData = JSON.parse(VGAL.getSaveData() || '{}');
+                    renderSlotsForPage(currentPage);
+                } catch(e) {
+                    console.error("Failed to get save data:", e);
+                    grid.innerHTML = `<p style="color: var(--danger-color);">读取存档数据失败。</p>`;
+                } finally {
+                    grid.style.display = 'grid';
+                    loading.style.display = 'none';
+                }
+            }, 50);
+        }
+
+        function renderSlotsForPage(page) {
             const grid = document.getElementById('slots-grid');
             grid.innerHTML = '';
 
-            const savedData = JSON.parse(VGAL.getSaveData() || '{}');
+            const startSlot = (page - 1) * SLOTS_PER_PAGE + 1;
+            const endSlot = startSlot + SLOTS_PER_PAGE - 1;
 
-            for (let i = 1; i <= SLOTS_PER_PAGE * TOTAL_PAGES; i++) {
-                const slotData = savedData[i];
+            for (let i = startSlot; i <= endSlot; i++) {
+                const slotData = allSavedData[i];
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.dataset.slot = i;
@@ -114,6 +132,28 @@
                 card.appendChild(body);
                 grid.appendChild(card);
             }
+            updatePaginationUI();
+        }
+
+        function setupPaginationListeners() {
+            document.getElementById('prev-button').onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderSlotsForPage(currentPage);
+                }
+            };
+            document.getElementById('next-button').onclick = () => {
+                if (currentPage < TOTAL_PAGES) {
+                    currentPage++;
+                    renderSlotsForPage(currentPage);
+                }
+            };
+        }
+
+        function updatePaginationUI() {
+            document.getElementById('page-info').textContent = `第 ${currentPage} / ${TOTAL_PAGES} 页`;
+            document.getElementById('prev-button').disabled = currentPage === 1;
+            document.getElementById('next-button').disabled = currentPage === TOTAL_PAGES;
         }
 
         function showConfirmationModal(slot) {
@@ -140,7 +180,6 @@
             if (!success) {
                 alert('读档失败！');
             }
-            // 成功时，Java端会处理Activity的关闭和跳转
         }
 
         function formatDateTime(dateTimeStr) {
@@ -151,8 +190,7 @@
                 const time = `${String(dt.time.hour).padStart(2, '0')}:${String(dt.time.minute).padStart(2, '0')}`;
                 return `${date} ${time}`;
             } catch (e) {
-                console.error("Error parsing date:", e);
-                return dateTimeStr;
+                return "日期解析错误";
             }
         }
     </script>

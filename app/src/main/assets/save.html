@@ -4,45 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>游戏存档</title>
-    <!-- 链接到统一的主题样式表 -->
     <link rel="stylesheet" href="theme.css">
     <style>
-        /* 存档界面特定的样式 */
         body {
             background-color: var(--bg-main);
             background-image: 
                 radial-gradient(circle at 10% 20%, var(--save-view-accent) 0%, transparent 40%),
                 radial-gradient(circle at 80% 90%, var(--save-view-accent) 0%, transparent 40%);
         }
-        .page-title {
-            color: var(--primary-color);
-        }
+        .page-title { color: var(--primary-color); }
         .card-grid {
-            /* 横屏5列，竖屏2列 */
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        }
-        @media (orientation: landscape) {
-            .card-grid {
-                grid-template-columns: repeat(5, 1fr);
-            }
+            grid-template-columns: repeat(5, 1fr);
+            min-height: 400px; /* 防止切换页面时高度塌陷 */
         }
         @media (orientation: portrait) {
-            .card-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+            .card-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="page-title">游戏存档</h1>
+        <div id="loading-indicator" style="text-align: center; padding: 40px; display: none;">正在加载...</div>
         <div class="card-grid" id="slots-grid">
             <!-- 存档槽将动态添加到这里 -->
         </div>
-        <!-- 存档界面不需要分页和切换按钮，直接关闭即可 -->
+        <div class="pagination" id="pagination">
+            <button class="btn btn-primary" id="prev-button" disabled>上一页</button>
+            <span class="page-info" id="page-info">第 1 / 10 页</span>
+            <button class="btn btn-primary" id="next-button">下一页</button>
+        </div>
     </div>
 
-    <!-- 确认操作的模态弹窗 -->
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
             <div class="modal-header" id="modal-header">确认覆盖存档</div>
@@ -56,22 +49,46 @@
 
     <script>
         const SLOTS_PER_PAGE = 10;
-        const TOTAL_PAGES = 10; // 总共10页，100个槽位
+        const TOTAL_PAGES = 10;
+        let currentPage = 1;
         let currentSlot = null;
+        let allSavedData = {};
 
         document.addEventListener('DOMContentLoaded', () => {
-            renderSlots();
+            fetchDataAndRender();
+            setupPaginationListeners();
             setupModalListeners();
         });
 
-        function renderSlots() {
+        function fetchDataAndRender() {
             const grid = document.getElementById('slots-grid');
-            grid.innerHTML = ''; // 清空现有内容
+            const loading = document.getElementById('loading-indicator');
+            grid.style.display = 'none';
+            loading.style.display = 'block';
 
-            const savedData = JSON.parse(VGAL.getSaveData() || '{}');
+            setTimeout(() => {
+                try {
+                    allSavedData = JSON.parse(VGAL.getSaveData() || '{}');
+                    renderSlotsForPage(currentPage);
+                } catch(e) {
+                    console.error("Failed to get save data:", e);
+                    grid.innerHTML = `<p style="color: var(--danger-color);">读取存档数据失败。</p>`;
+                } finally {
+                    grid.style.display = 'grid';
+                    loading.style.display = 'none';
+                }
+            }, 50); // 短暂延迟以显示加载动画
+        }
 
-            for (let i = 1; i <= SLOTS_PER_PAGE * TOTAL_PAGES; i++) {
-                const slotData = savedData[i];
+        function renderSlotsForPage(page) {
+            const grid = document.getElementById('slots-grid');
+            grid.innerHTML = '';
+
+            const startSlot = (page - 1) * SLOTS_PER_PAGE + 1;
+            const endSlot = startSlot + SLOTS_PER_PAGE - 1;
+
+            for (let i = startSlot; i <= endSlot; i++) {
+                const slotData = allSavedData[i];
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.dataset.slot = i;
@@ -89,17 +106,15 @@
                 text.className = 'card-text';
 
                 if (slotData) {
-                    // 有存档数据
                     img.src = slotData.bmpPath ? `data:image/png;base64,${slotData.bmpPath}` : 'about:blank';
                     title.textContent = `存档 ${i}`;
                     text.textContent = formatDateTime(slotData.saveTime);
-                    card.onclick = () => showConfirmationModal(i, true); // 覆盖确认
+                    card.onclick = () => showConfirmationModal(i, true);
                 } else {
-                    // 空存档槽
                     img.style.backgroundColor = '#000';
                     title.textContent = `存档 ${i}`;
                     text.textContent = '空存档';
-                    card.onclick = () => saveGame(i); // 直接保存
+                    card.onclick = () => saveGame(i);
                 }
                 
                 body.appendChild(title);
@@ -108,13 +123,35 @@
                 card.appendChild(body);
                 grid.appendChild(card);
             }
+            updatePaginationUI();
+        }
+
+        function setupPaginationListeners() {
+            document.getElementById('prev-button').onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderSlotsForPage(currentPage);
+                }
+            };
+            document.getElementById('next-button').onclick = () => {
+                if (currentPage < TOTAL_PAGES) {
+                    currentPage++;
+                    renderSlotsForPage(currentPage);
+                }
+            };
+        }
+
+        function updatePaginationUI() {
+            document.getElementById('page-info').textContent = `第 ${currentPage} / ${TOTAL_PAGES} 页`;
+            document.getElementById('prev-button').disabled = currentPage === 1;
+            document.getElementById('next-button').disabled = currentPage === TOTAL_PAGES;
         }
 
         function showConfirmationModal(slot, isOverwrite) {
             currentSlot = slot;
             const modal = document.getElementById('confirmationModal');
-            document.getElementById('modal-header').textContent = isOverwrite ? `确认覆盖存档 ${slot}` : `确认保存至 ${slot}`;
-            document.getElementById('modal-body').textContent = isOverwrite ? '您确定要覆盖这个存档槽吗？此操作不可撤销。' : '您确定要保存游戏吗？';
+            document.getElementById('modal-header').textContent = `确认覆盖存档 ${slot}`;
+            document.getElementById('modal-body').textContent = '您确定要覆盖这个存档槽吗？此操作不可撤销。';
             modal.classList.add('show');
         }
 
@@ -132,7 +169,6 @@
         function saveGame(slot) {
             const success = VGAL.SaveData(slot);
             if (success) {
-                // 保存成功后，可以考虑关闭界面或刷新界面显示新截图
                 VGAL.Close();
             } else {
                 alert('存档失败！');
@@ -142,14 +178,12 @@
         function formatDateTime(dateTimeStr) {
             if (!dateTimeStr) return '未知时间';
             try {
-                // Java LocalDateTime 格式: { "date": {...}, "time": {...} }
                 const dt = dateTimeStr;
                 const date = `${dt.date.year}-${String(dt.date.month).padStart(2, '0')}-${String(dt.date.day).padStart(2, '0')}`;
                 const time = `${String(dt.time.hour).padStart(2, '0')}:${String(dt.time.minute).padStart(2, '0')}`;
                 return `${date} ${time}`;
             } catch (e) {
-                console.error("Error parsing date:", e);
-                return dateTimeStr; // 解析失败则返回原始字符串
+                return "日期解析错误";
             }
         }
     </script>
