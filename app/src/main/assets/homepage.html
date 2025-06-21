@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VGal 游戏列表</title>
     <style>
         :root {
@@ -24,30 +24,32 @@
             font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
             color: var(--text-primary);
             margin: 0;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            padding: 0;
+            overflow-x: hidden;
         }
 
         .main-container {
             display: flex;
             flex-direction: column;
-            height: 100%;
-            padding: 24px;
+            padding: 16px;
             box-sizing: border-box;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .title-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
             border-bottom: 1px solid var(--card-border);
-            flex-shrink: 0;
         }
 
         .title {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 600;
         }
 
@@ -79,10 +81,10 @@
             position: absolute;
             right: 0;
             background-color: var(--bg-gradient-end);
-            min-width: 180px;
+            min-width: 160px;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
             border-radius: 8px;
-            z-index: 1;
+            z-index: 10;
             padding: 8px;
             border: 1px solid var(--card-border);
         }
@@ -106,128 +108,215 @@
         }
         
         .content-area {
-            flex-grow: 1;
+            width: 100%;
             overflow-y: auto;
-            padding-right: 10px; /* space for scrollbar */
         }
 
         /* Scrollbar styling */
-        .content-area::-webkit-scrollbar {
-            width: 8px;
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-        .content-area::-webkit-scrollbar-track {
+        ::-webkit-scrollbar-track {
             background: transparent;
         }
-        .content-area::-webkit-scrollbar-thumb {
+        ::-webkit-scrollbar-thumb {
             background-color: var(--card-border);
             border-radius: 4px;
         }
-        .content-area::-webkit-scrollbar-thumb:hover {
+        ::-webkit-scrollbar-thumb:hover {
             background-color: var(--primary-accent);
         }
 
-        .game-grid {
-            display: grid;
-            gap: 24px;
-            padding-bottom: 24px;
+        /* Container styles with grid layout */
+        .container {
+            width: 100%;
+            margin-bottom: 20px;
         }
 
-        /* Layout modes */
-        .game-grid.single { grid-template-columns: 1fr; }
-        .game-grid.double { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
-        .game-grid.grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+        /* Layout specific styles */
+        .single .row {
+            margin-bottom: 20px;
+        }
+        .single .icon-wrapper {
+            width: 100%;
+        }
+        
+        .double .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .double .icon-wrapper {
+            width: calc(50% - 10px);
+            margin-bottom: 0;
+        }
+        
+        .grid .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .grid .icon-wrapper {
+            width: calc(25% - 12px);
+            margin-bottom: 0;
+        }
 
+        /* Responsive adjustments for grid layout */
+        @media (max-width: 1024px) {
+            .grid .icon-wrapper {
+                width: calc(33.33% - 12px);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .double .icon-wrapper {
+                width: 100%;
+                margin-bottom: 16px;
+            }
+            .grid .icon-wrapper {
+                width: calc(50% - 8px);
+            }
+            .title {
+                font-size: 20px;
+            }
+            .main-container {
+                padding: 12px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .grid .icon-wrapper {
+                width: 100%;
+            }
+            .title-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .settings-dropdown {
+                align-self: flex-end;
+            }
+        }
 
-        .game-card {
+        /* Game card styles */
+        .icon-wrapper {
+            margin-bottom: 16px;
+        }
+        
+        .icon {
             position: relative;
             border-radius: 12px;
             overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-            background-color: var(--bg-gradient-start);
+            background-color: var(--card-bg);
             border: 1px solid var(--card-border);
+            transition: transform 0.3s, box-shadow 0.3s;
+            width: 100%;
+            aspect-ratio: 16/9;
         }
         
-        .game-card:hover {
+        .icon:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary-accent);
         }
 
-        .game-card .thumbnail {
+        .icon img {
             width: 100%;
-            display: block;
-            aspect-ratio: 16 / 9;
+            height: 100%;
             object-fit: cover;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s;
         }
-
-        .game-card:hover .thumbnail {
+        
+        .icon:hover img {
             transform: scale(1.05);
         }
 
-        .card-overlay {
+        .icon-label {
             position: absolute;
             bottom: 0;
             left: 0;
-            right: 0;
-            padding: 16px;
+            width: 100%;
+            padding: 12px;
             background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .game-title {
-            font-size: 18px;
+            color: white;
+            transition: transform 0.3s;
             font-weight: 500;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
         }
-
-        .card-actions {
+        
+        .icon-actions {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
+            width: 100%;
+            height: 100%;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(3px);
             opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .game-card:hover .card-actions {
-            opacity: 1;
+            transition: opacity 0.3s;
+            padding: 16px;
+            box-sizing: border-box;
         }
         
+        .icon:hover .icon-actions {
+            opacity: 1;
+        }
+
         .action-btn {
-            padding: 10px 24px;
+            min-width: 120px;
+            padding: 10px 16px;
             border: 1px solid var(--card-border);
             border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 500;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
+            text-align: center;
             background: rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-
+        
         .action-btn:hover {
             background: var(--primary-accent);
             border-color: var(--primary-accent);
         }
-
+        
         .load-btn {
             background: rgba(72, 187, 120, 0.2);
-            border-color: rgba(72, 187, 120, 0.5);
+            border-color: rgba(72, 187, 120, 0.3);
         }
-
+        
         .load-btn:hover {
             background: var(--success-accent);
             border-color: var(--success-accent);
+        }
+        
+        /* Grid view specific adjustments */
+        .grid .action-btn {
+            min-width: auto;
+            width: 100%;
+            padding: 8px;
+            font-size: 12px;
+        }
+        
+        .no-games-message {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 30px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
         }
     </style>
 </head>
@@ -236,7 +325,7 @@
         <div class="title-bar">
             <div class="title">游戏列表</div>
             <div class="settings-dropdown">
-                <button class="settings-btn" onclick="toggleDropdown()">
+                <button class="settings-btn" onclick="toggleDropdown()" aria-label="布局设置">
                     <svg class="settings-icon" viewBox="0 0 24 24">
                         <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
                     </svg>
@@ -244,39 +333,39 @@
                 <div class="dropdown-content" id="settingsDropdown">
                     <a class="dropdown-item" onclick="setLayout('single')">单列视图</a>
                     <a class="dropdown-item" onclick="setLayout('double')">双列视图</a>
-                    <a class="dropdown-item" onclick="setLayout('grid')">紧凑网格视图</a>
+                    <a class="dropdown-item" onclick="setLayout('grid')">网格视图</a>
                 </div>
             </div>
         </div>
         <div class="content-area">
-            <div class="game-grid single" id="game-container"></div>
+            <div class="container single" id="game-container"></div>
         </div>
     </div>
 
     <script>
         const DEFAULT_ICON = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiA5Ij4KICA8cmVjdCB3aWR0aD0iMTYiIGhlaWdodD0iOSIgZmlsbD0iIzJkMzc0OCIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjYTBiYWUwIiBmb250LXNpemU9IjFweCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiPk5vIEljb248L3RleHQ+Cjwvc3ZnPg==";
         
-        // --- Mock VGAL object for testing in browser ---
-        // const VGAL = {
-        //     getGames: function() {
-        //         return JSON.stringify([
-        //             { name: "Game 1", icon: null },
-        //             { name: "Game 2", icon: "https://via.placeholder.com/1920x1080/FFC107/000000?Text=Game+2" },
-        //             { name: "Game 3", icon: "https://via.placeholder.com/1920x1080/4CAF50/FFFFFF?Text=Game+3" },
-        //             { name: "Game 4", icon: "https://via.placeholder.com/1920x1080/F44336/FFFFFF?Text=Game+4" },
-        //             { name: "Game 5", icon: null },
-        //             { name: "Game 6", icon: "https://via.placeholder.com/1920x1080/9C27B0/FFFFFF?Text=Game+6" },
-        //         ]);
-        //     },
-        //     startGame: function(name) { console.log(`Starting game: ${name}`); },
-        //     openLoadData: function(name) { console.log(`Opening load data for game: ${name}`); }
-        // };
-        // --- End Mock ---
+        // 仅用于浏览器内测试的 VGAL mock 对象
+        /*const VGAL = {
+            getGames: function() {
+                return JSON.stringify([
+                    { name: "Game 1", icon: null },
+                    { name: "Game 2", icon: "https://via.placeholder.com/1920x1080/FFC107/000000?Text=Game+2" },
+                    { name: "Game 3", icon: "https://via.placeholder.com/1920x1080/4CAF50/FFFFFF?Text=Game+3" },
+                    { name: "Game 4", icon: "https://via.placeholder.com/1920x1080/F44336/FFFFFF?Text=Game+4" },
+                    { name: "Game 5", icon: null },
+                    { name: "Game 6", icon: "https://via.placeholder.com/1920x1080/9C27B0/FFFFFF?Text=Game+6" },
+                ]);
+            },
+            startGame: function(name) { console.log(`Starting game: ${name}`); },
+            openLoadData: function(name) { console.log(`Opening load data for game: ${name}`); }
+        };*/
 
         function toggleDropdown() {
             document.getElementById('settingsDropdown').classList.toggle('show');
         }
 
+        // 点击外部区域关闭下拉菜单
         window.onclick = function(event) {
             if (!event.target.matches('.settings-btn') && !event.target.closest('.settings-btn')) {
                 const dropdowns = document.getElementsByClassName('dropdown-content');
@@ -297,72 +386,102 @@
         }
 
         function setLayout(layout) {
+            // 关闭下拉菜单
             const dropdown = document.getElementById('settingsDropdown');
             if (dropdown) dropdown.classList.remove('show');
             
+            // 更改容器类名
             const container = document.getElementById('game-container');
-            container.className = `game-grid ${layout}`;
-            container.innerHTML = ''; // Clear previous content
+            container.className = `container ${layout}`;
+            container.innerHTML = ''; // 清空内容
+            
+            // 保存布局偏好
             saveLayout(layout);
 
+            // 获取游戏列表并渲染
             const games = JSON.parse(VGAL.getGames());
 
             if (!games || games.length === 0) {
-                container.innerHTML = '<p>未找到任何游戏。请将游戏文件夹放置在 "vgal" 目录中。</p>';
+                container.innerHTML = '<div class="no-games-message">未找到任何游戏。请将游戏文件夹放置在 "vgal" 目录中。</div>';
                 return;
             }
 
-            games.forEach(game => {
-                const card = document.createElement('div');
-                card.className = 'game-card';
-                
-                const thumbnail = document.createElement('img');
-                thumbnail.className = 'thumbnail';
-                thumbnail.src = game.icon || DEFAULT_ICON;
-                thumbnail.alt = game.name;
-                thumbnail.onerror = () => { thumbnail.src = DEFAULT_ICON; };
+            // 根据布局确定每行的图标数量
+            let iconsPerRow = layout === 'single' ? 1 : layout === 'double' ? 2 : 4;
+            
+            // 对于小屏幕调整网格布局的列数
+            if (layout === 'grid' && window.innerWidth <= 768) {
+                iconsPerRow = window.innerWidth <= 480 ? 1 : 2;
+            }
 
-                const overlay = document.createElement('div');
-                overlay.className = 'card-overlay';
+            // 创建行和图标
+            for (let i = 0; i < games.length; i += iconsPerRow) {
+                const row = document.createElement('div');
+                row.className = 'row';
 
-                const title = document.createElement('div');
-                title.className = 'game-title';
-                title.textContent = game.name;
+                for (let j = 0; j < iconsPerRow && (i + j) < games.length; j++) {
+                    const game = games[i + j];
+                    const iconWrapper = document.createElement('div');
+                    iconWrapper.className = 'icon-wrapper';
 
-                const actions = document.createElement('div');
-                actions.className = 'card-actions';
+                    const icon = document.createElement('div');
+                    icon.className = 'icon';
 
-                const startButton = document.createElement('button');
-                startButton.className = 'action-btn start-btn';
-                startButton.textContent = '启动游戏';
-                startButton.onclick = (e) => {
-                    e.stopPropagation();
-                    VGAL.startGame(game.name);
-                };
+                    const img = document.createElement('img');
+                    img.src = game.icon || DEFAULT_ICON;
+                    img.alt = game.name;
+                    img.loading = "lazy"; // 延迟加载
+                    img.onerror = () => { img.src = DEFAULT_ICON; };
 
-                const loadButton = document.createElement('button');
-                loadButton.className = 'action-btn load-btn';
-                loadButton.textContent = '读取存档';
-                loadButton.onclick = (e) => {
-                    e.stopPropagation();
-                    VGAL.openLoadData(game.name);
-                };
+                    const iconLabel = document.createElement('div');
+                    iconLabel.className = 'icon-label';
+                    iconLabel.textContent = game.name;
 
-                overlay.appendChild(title);
-                actions.appendChild(startButton);
-                actions.appendChild(loadButton);
+                    const actions = document.createElement('div');
+                    actions.className = 'icon-actions';
 
-                card.appendChild(thumbnail);
-                card.appendChild(overlay);
-                card.appendChild(actions);
+                    const startButton = document.createElement('button');
+                    startButton.className = 'action-btn start-btn';
+                    startButton.textContent = '启动游戏';
+                    startButton.onclick = (e) => {
+                        e.stopPropagation();
+                        VGAL.startGame(game.name);
+                    };
 
-                container.appendChild(card);
-            });
+                    const loadButton = document.createElement('button');
+                    loadButton.className = 'action-btn load-btn';
+                    loadButton.textContent = '读取存档';
+                    loadButton.onclick = (e) => {
+                        e.stopPropagation();
+                        VGAL.openLoadData(game.name);
+                    };
+
+                    actions.appendChild(startButton);
+                    actions.appendChild(loadButton);
+
+                    icon.appendChild(img);
+                    icon.appendChild(iconLabel);
+                    icon.appendChild(actions);
+                    iconWrapper.appendChild(icon);
+                    row.appendChild(iconWrapper);
+                }
+
+                container.appendChild(row);
+            }
         }
 
+        // 页面加载时应用保存的布局
         document.addEventListener('DOMContentLoaded', () => {
             const savedLayout = getLayout();
             setLayout(savedLayout);
+        });
+        
+        // 监听窗口大小变化，为响应式设计重新布局
+        window.addEventListener('resize', () => {
+            const currentLayout = getLayout();
+            if (currentLayout === 'grid' || currentLayout === 'double') {
+                setLayout(currentLayout);
+            }
         });
     </script>
 </body>
