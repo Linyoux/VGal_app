@@ -6,217 +6,146 @@
     <title>游戏回想</title>
     <style>
         :root {
-            --bg-gradient-start: #1a202c;
-            --bg-gradient-end: #2d3748;
-            --card-bg: rgba(45, 55, 72, 0.7);
-            --card-border: rgba(255, 255, 255, 0.1);
-            --card-hover-bg: rgba(74, 85, 104, 0.8);
-            --text-primary: #e2e8f0;
-            --text-secondary: #a0aec0;
-            --primary-accent: #4299e1;
-            --primary-accent-hover: #2b6cb0;
+            --bg-color: #1c1c28;
+            --card-bg: rgba(40, 44, 52, 0.8);
+            --text-color: #ffffff;
+            --accent-color: #4f8df5;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
-            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-            color: var(--text-primary);
             margin: 0;
             padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             min-height: 100vh;
             overflow-x: hidden;
         }
 
-        .main-container {
+        .container {
             display: flex;
             flex-direction: column;
             height: 100vh;
             padding: 16px;
-            box-sizing: border-box;
         }
 
-        .title-bar {
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--card-border);
-            flex-shrink: 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .title {
-            font-size: 24px;
-            font-weight: 600;
-            margin: 0;
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
         }
 
         .btn {
             padding: 8px 16px;
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--accent-color);
+            color: white;
             font-weight: 500;
-            transition: all 0.2s ease;
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
-        }
-        .btn:hover {
-            background: var(--primary-accent);
-            border-color: var(--primary-accent);
-        }
-        
-        .content-area {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding-right: 8px;
-            margin-bottom: 16px;
+            font-size: 15px;
+            cursor: pointer;
         }
 
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background-color: var(--card-border);
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background-color: var(--primary-accent);
+        .content {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 16px;
         }
 
         .backlog-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            padding-bottom: 16px;
         }
 
         .log-item {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
+            background-color: var(--card-bg);
             padding: 16px;
-            transition: all 0.2s ease-in-out;
-            backdrop-filter: blur(4px);
-            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
-        .log-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-            border-color: var(--primary-accent);
-            background: var(--card-hover-bg);
-        }
+
         .log-item:active {
-            transform: translateY(0);
-            transition: transform 0.1s;
+            background-color: rgba(50, 54, 62, 0.8);
         }
-        
+
         .log-text {
-            font-size: 16px;
-            line-height: 1.6;
             margin: 0;
+            font-size: 16px;
+            line-height: 1.5;
         }
-        
+
         .empty-message {
             text-align: center;
-            color: var(--text-secondary);
-            padding: 30px;
-            background: var(--card-bg);
-            border-radius: 12px;
-            border: 1px solid var(--card-border);
-            margin: 20px 0;
+            padding: 32px;
+            color: rgba(255, 255, 255, 0.7);
         }
-        
+
         .pagination {
-            flex-shrink: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding-top: 12px;
-            border-top: 1px solid var(--card-border);
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
+
         .page-info {
             margin: 0 12px;
-            font-size: 14px;
+            font-size: 15px;
         }
-        .pagination .btn[disabled] {
+
+        .btn:disabled {
             opacity: 0.5;
-            cursor: not-allowed;
-            background: var(--card-bg);
+            cursor: default;
         }
-        
-        @media (max-width: 480px) {
-            .title-bar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            .title {
-                font-size: 20px;
-            }
-            .btn {
-                align-self: flex-end;
-                font-size: 13px;
-                padding: 6px 12px;
-            }
-            .main-container {
+
+        /* 横屏模式调整 */
+        @media (orientation: landscape) {
+            .container {
                 padding: 12px;
             }
-            .log-text {
-                font-size: 14px;
-            }
-            .pagination .btn {
-                padding: 6px 10px;
-                font-size: 13px;
-            }
-            .page-info {
-                font-size: 13px;
-            }
-        }
-        
-        /* 适配小屏幕的特殊处理 */
-        @media (max-height: 500px) {
-            .main-container {
-                padding: 8px;
-            }
-            .title-bar {
-                margin-bottom: 8px;
-                padding-bottom: 8px;
-            }
-            .title {
+            
+            .header-title {
                 font-size: 18px;
             }
-            .content-area {
-                margin-bottom: 8px;
-            }
+            
             .log-item {
-                padding: 10px;
+                padding: 12px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <div class="title-bar">
-            <h1 class="title">游戏回想</h1>
-            <button class="btn" onclick="handleClose()">返回游戏</button>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">游戏回想</div>
+            <button class="btn" onclick="handleBackToGame()">返回游戏</button>
         </div>
-        <div class="content-area">
+        
+        <div class="content">
             <div class="backlog-list" id="backlog-list">
-                <!-- 日志条目将动态插入到这里 -->
                 <div class="empty-message">加载中...</div>
             </div>
         </div>
-        <div class="pagination" id="pagination">
-            <button id="prev-button" class="btn" disabled>上一页</button>
-            <span id="page-info" class="page-info">第 1 / 1 页</span>
-            <button id="next-button" class="btn">下一页</button>
+        
+        <div class="pagination">
+            <button id="prev-page" class="btn" disabled>上一页</button>
+            <div class="page-info" id="page-info">第 1 / 1 页</div>
+            <button id="next-page" class="btn">下一页</button>
         </div>
     </div>
 
@@ -224,111 +153,113 @@
         let currentPage = 1;
         let maxPage = 1;
 
-        function renderLogs(logData) {
+        // 返回游戏
+        function handleBackToGame() {
+            // 尝试调用 VGAL.backTo 传递特殊值表示返回
+            if (typeof VGAL !== 'undefined' && VGAL.backTo) {
+                VGAL.backTo(-1);
+            }
+        }
+        
+        // 渲染回想列表
+        function renderBacklog(data) {
             const list = document.getElementById('backlog-list');
             list.innerHTML = '';
-
-            if (!logData || !logData.texts || logData.texts.length === 0) {
-                list.innerHTML = '<div class="empty-message">没有历史记录。</div>';
+            
+            if (!data || !data.texts || data.texts.length === 0) {
+                list.innerHTML = '<div class="empty-message">没有历史记录</div>';
                 return;
             }
-
-            // 按照位置排序文本，从旧到新显示
-            const sortedTexts = [...logData.texts].sort((a, b) => a.pos - b.pos);
-
-            sortedTexts.forEach(item => {
+            
+            // 创建回想条目
+            data.texts.forEach(item => {
                 const logItem = document.createElement('div');
                 logItem.className = 'log-item';
                 logItem.onclick = () => VGAL.backTo(item.pos);
-                logItem.setAttribute('data-pos', item.pos);
                 
                 const logText = document.createElement('p');
                 logText.className = 'log-text';
                 logText.textContent = item.text;
-
+                
                 logItem.appendChild(logText);
                 list.appendChild(logItem);
             });
         }
-
+        
+        // 更新分页信息
         function updatePagination() {
             document.getElementById('page-info').textContent = `第 ${currentPage} / ${maxPage} 页`;
-            document.getElementById('prev-button').disabled = currentPage <= 1;
-            document.getElementById('next-button').disabled = currentPage >= maxPage;
+            document.getElementById('prev-page').disabled = currentPage <= 1;
+            document.getElementById('next-page').disabled = currentPage >= maxPage;
         }
-
-        function fetchAndDisplayLogs(page) {
+        
+        // 加载指定页的回想
+        function loadBacklog(page) {
             try {
                 const dataString = VGAL.getBackLog(page);
                 if (dataString) {
-                    const logData = JSON.parse(dataString);
-                    currentPage = logData.page || 1;
-                    maxPage = logData.maxPage > 0 ? logData.maxPage : 1;
-                    renderLogs(logData);
+                    const data = JSON.parse(dataString);
+                    currentPage = data.page || 1;
+                    maxPage = data.maxPage > 0 ? data.maxPage : 1;
+                    renderBacklog(data);
                     updatePagination();
                 } else {
-                    renderLogs(null); // 渲染空状态
+                    renderBacklog(null);
+                    updatePagination();
                 }
             } catch (e) {
-                console.error("Failed to parse backlog data:", e);
-                renderLogs(null);
+                console.error("解析回想数据失败:", e);
+                const list = document.getElementById('backlog-list');
+                list.innerHTML = '<div class="empty-message">加载失败</div>';
             }
         }
         
-        function handleClose() {
-            // 注意：BackLogActivity 中的 WebAppInterface 没有 'Close' 方法
-            // 为了完整功能，应该在 BackLogActivity.java 中添加类似于 SaveLoadActivity 中的
-            // @JavascriptInterface public void Close() 方法，这将调用 finish() 或 onBackPressed()
-            // 作为后备方案，使用历史回退
-            try {
-                history.back();
-            } catch (e) {
-                // 如果 history.back() 失败，尝试调用 VGAL.backTo 
-                // 传递一个特殊值，让原生代码知道是关闭而不是跳转
-                if (typeof VGAL !== 'undefined' && VGAL.backTo) {
-                    VGAL.backTo(-1);
-                }
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchAndDisplayLogs(1); // 初始加载第一页
-
-            document.getElementById('prev-button').onclick = () => {
-                if (currentPage > 1) {
-                    fetchAndDisplayLogs(currentPage - 1);
-                }
-            };
-
-            document.getElementById('next-button').onclick = () => {
-                if (currentPage < maxPage) {
-                    fetchAndDisplayLogs(currentPage + 1);
-                }
-            };
-            
-            // 添加触摸滑动支持
+        // 处理左右滑动手势
+        function setupSwipeGestures() {
             let touchStartX = 0;
             let touchEndX = 0;
             
             document.addEventListener('touchstart', e => {
                 touchStartX = e.changedTouches[0].screenX;
-            }, false);
+            }, { passive: true });
             
             document.addEventListener('touchend', e => {
                 touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-            }, false);
-            
-            function handleSwipe() {
-                const swipeThreshold = 100; // 滑动阈值
-                if (touchEndX - touchStartX > swipeThreshold && currentPage > 1) {
-                    // 右滑，上一页
-                    fetchAndDisplayLogs(currentPage - 1);
-                } else if (touchStartX - touchEndX > swipeThreshold && currentPage < maxPage) {
-                    // 左滑，下一页
-                    fetchAndDisplayLogs(currentPage + 1);
+                const swipeDistance = touchEndX - touchStartX;
+                
+                // 需要足够的滑动距离才触发翻页
+                if (Math.abs(swipeDistance) > 80) {
+                    if (swipeDistance > 0 && currentPage > 1) {
+                        // 向右滑动，上一页
+                        loadBacklog(currentPage - 1);
+                    } else if (swipeDistance < 0 && currentPage < maxPage) {
+                        // 向左滑动，下一页
+                        loadBacklog(currentPage + 1);
+                    }
                 }
-            }
+            }, { passive: true });
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 加载第一页回想
+            loadBacklog(1);
+            
+            // 绑定分页按钮事件
+            document.getElementById('prev-page').addEventListener('click', () => {
+                if (currentPage > 1) {
+                    loadBacklog(currentPage - 1);
+                }
+            });
+            
+            document.getElementById('next-page').addEventListener('click', () => {
+                if (currentPage < maxPage) {
+                    loadBacklog(currentPage + 1);
+                }
+            });
+            
+            // 设置滑动手势
+            setupSwipeGestures();
         });
     </script>
 </body>
