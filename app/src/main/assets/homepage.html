@@ -3,383 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>图标布局切换</title>
+    <title>VGal 游戏启动器</title>
+    <link rel="stylesheet" href="theme.css">
     <style>
-        body {
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background-color: #f0f0f0;
-            overflow-y: auto;
-            align-items: center;
+        .card-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         }
-
-        /* 新增标题栏样式 */
-        .title-bar {
-            width: 90%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: #fff;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .settings-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .settings-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-        }
-
-        .settings-btn:hover {
-            background-color: #f0f0f0;
-        }
-
-        .settings-icon {
-            width: 24px;
-            height: 24px;
-            fill: #666;
-        }
-
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: #fff;
-            min-width: 160px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            z-index: 1;
-            padding: 8px 0;
-        }
-
-        .dropdown-content.show {
-            display: block;
-        }
-
-        .dropdown-item {
-            display: block;
-            padding: 8px 16px;
-            text-decoration: none;
-            color: #333;
-            transition: background-color 0.2s;
-            cursor: pointer;
-        }
-
-        .dropdown-item:hover {
-            background-color: #f0f0f0;
-        }
-
-        /* 原有样式 */
-        .container {
-            width: 90%;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .row {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            width: 100%;
-        }
-        .icon-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            width: 100%;
-            cursor: pointer;
-        }
-        .icon {
-            position: relative;
-            background-color: #007BFF;
-            border-radius: 8px;
-            overflow: hidden;
-            transition: transform 0.3s;
-            width: 100%;
-        }
-        .icon:hover {
-            transform: scale(1.05);
-        }
-        .icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-        .icon-label {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 4px;
-            background-color: rgba(255, 255, 255, 0.8);
-            font-size: 14px;
-            color: #333;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-        
-        .icon-actions {
+        .card-actions {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
             display: flex;
-            gap: 4px;
-            padding: 4px;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
+            gap: 10px;
+            padding: 15px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
             transform: translateY(100%);
-            transition: transform 0.3s ease;
-            justify-content: center;
+            transition: transform var(--transition-speed) ease;
         }
-
-        .icon-wrapper:hover .icon-actions {
+        .card:hover .card-actions {
             transform: translateY(0);
-        }
-
-        .icon-wrapper:hover .icon-label {
-            transform: translateY(-100%);
-        }
-
-        .action-btn {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            background: #2563eb;
-            color: white;
-        }
-
-        .action-btn:hover {
-            background: #1d4ed8;
-        }
-
-        .load-btn {
-            background: #10b981;
-        }
-
-        .load-btn:hover {
-            background: #059669;
-        }
-
-        .single .icon-wrapper {
-            width: 100%;
-        }
-        .single .icon {
-            width: 100%;
-            padding-top: 56.25%;
-        }
-        .single .icon img {
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        .double .icon-wrapper {
-            width: 48%;
-        }
-        .double .icon {
-            width: 100%;
-            padding-top: 75%;
-        }
-        .double .icon img {
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        .grid .icon-wrapper {
-            width: 23%;
-        }
-        .grid .icon {
-            width: 100%;
-            padding-top: 100%;
-        }
-        .grid .icon img {
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-        .grid .action-btn {
-            padding: 4px 8px;
-            font-size: 12px;
-            min-width: 40px;
-        }
-        
-        .grid .icon-label {
-            font-size: 12px;
-            padding: 3px;
-        }
-        
-        .grid .icon-actions {
-            padding: 3px;
-            gap: 3px;
         }
     </style>
 </head>
 <body>
-    <div class="title-bar">
-        <div class="title">游戏列表</div>
-        <div class="settings-dropdown">
-            <button class="settings-btn" onclick="toggleDropdown()">
-                <svg class="settings-icon" viewBox="0 0 24 24">
-                    <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
-                </svg>
-            </button>
-            <div class="dropdown-content" id="settingsDropdown">
-                <a class="dropdown-item" onclick="setLayout('single')">16:9 单列表视图</a>
-                <a class="dropdown-item" onclick="setLayout('double')">4:3 双列表视图</a>
-                <a class="dropdown-item" onclick="setLayout('grid')">1x1 网格视图</a>
-            </div>
+    <div class="container">
+        <h1 class="page-title">游戏列表</h1>
+        <div id="loading-indicator" style="text-align: center; padding: 40px; display: none;">正在加载游戏...</div>
+        <div class="card-grid" id="game-container">
+            <!-- 游戏列表将动态添加到这里 -->
         </div>
     </div>
-    <div class="container single" id="game-container"></div>
 
     <script>
-        const DEFAULT_ICON = "https://via.placeholder.com/1920x1080";
-        
-        // const VGAL = {
-        //     getGames: function() {
-        //         return [
-        //             { name: "Game 1", icon: "https://via.placeholder.com/1920x1080" },
-        //             { name: "Game 2", icon: "https://via.placeholder.com/1920x1080" },
-        //             { name: "Game 3", icon: "https://via.placeholder.com/1920x1080" },
-        //             { name: "Game 4", icon: "https://via.placeholder.com/1920x1080" },
-        //             { name: "Game 5", icon: "https://via.placeholder.com/1920x1080" },
-        //             { name: "Game 6", icon: "https://via.placeholder.com/1920x1080" },
-        //             { name: "Game 7", icon: "https://via.placeholder.com/1920x1080" },
-        //             { name: "Game 8", icon: "https://via.placeholder.com/1920x1080" },
-        //             { name: "Game 9", icon: "https://via.placeholder.com/1920x1080" },
-        //         ];
-        //     },
-        //     startGame: function(name) {
-        //         console.log(`Starting game: ${name}`);
-        //     },
-        //     openLoadData: function(name) {
-        //         console.log(`Opening load data for game: ${name}`);
-        //     }
-        // };
-
-        function toggleDropdown() {
-            const dropdown = document.getElementById('settingsDropdown');
-            dropdown.classList.toggle('show');
-        }
-
-        window.onclick = function(event) {
-            if (!event.target.matches('.settings-btn') && !event.target.matches('.settings-icon')) {
-                const dropdowns = document.getElementsByClassName('dropdown-content');
-                for (const dropdown of dropdowns) {
-                    if (dropdown.classList.contains('show')) {
-                        dropdown.classList.remove('show');
-                    }
-                }
-            }
-        }
-
-        function saveLayout(layout) {
-            localStorage.setItem('preferred-layout', layout);
-        }
-
-        function getLayout() {
-            return localStorage.getItem('preferred-layout') || 'single';
-        }
-
-        function setLayout(layout) {
-            const dropdown = document.getElementById('settingsDropdown');
-            dropdown.classList.remove('show');
-            
-            const container = document.getElementById('game-container');
-            container.className = `container ${layout}`;
-            container.innerHTML = '';
-            saveLayout(layout);
-
-            const games = JSON.parse(VGAL.getGames());
-            let iconsPerRow = layout === 'single' ? 1 : layout === 'double' ? 2 : 4;
-
-            for (let i = 0; i < games.length; i += iconsPerRow) {
-                const row = document.createElement('div');
-                row.className = 'row';
-
-                for (let j = 0; j < iconsPerRow && (i + j) < games.length; j++) {
-                    const game = games[i + j];
-                    const iconWrapper = document.createElement('div');
-                    iconWrapper.className = 'icon-wrapper';
-
-                    const icon = document.createElement('div');
-                    icon.className = 'icon';
-
-                    const img = document.createElement('img');
-                    img.src = game.icon || DEFAULT_ICON;
-                    console.log(img.src)
-                    img.alt = game.name;
-                    img.onerror = () => img.src = DEFAULT_ICON;
-
-                    const iconLabel = document.createElement('div');
-                    iconLabel.className = 'icon-label';
-                    iconLabel.textContent = game.name;
-
-                    const actions = document.createElement('div');
-                    actions.className = 'icon-actions';
-
-                    const startButton = document.createElement('button');
-                    startButton.className = 'action-btn start-btn';
-                    startButton.textContent = '启动游戏';
-                    startButton.onclick = (e) => {
-                        e.stopPropagation();
-                        VGAL.startGame(game.name);
-                    };
-
-                    const loadButton = document.createElement('button');
-                    loadButton.className = 'action-btn load-btn';
-                    loadButton.textContent = '读取存档';
-                    loadButton.onclick = (e) => {
-                        e.stopPropagation();
-                        VGAL.openLoadData(game.name);
-                    };
-
-                    actions.appendChild(startButton);
-                    actions.appendChild(loadButton);
-
-                    icon.appendChild(img);
-                    icon.appendChild(iconLabel);
-                    icon.appendChild(actions);
-                    iconWrapper.appendChild(icon);
-                    row.appendChild(iconWrapper);
-                }
-
-                container.appendChild(row);
-            }
-        }
+        const DEFAULT_ICON_BG = 'about:blank'; // 使用空白背景代替占位图
 
         document.addEventListener('DOMContentLoaded', () => {
-            const savedLayout = getLayout();
-            setLayout(savedLayout);
+            loadGames();
         });
+
+        function loadGames() {
+            const container = document.getElementById('game-container');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            
+            container.innerHTML = '';
+            loadingIndicator.style.display = 'block';
+
+            // 使用setTimeout模拟异步加载，给原生代码响应时间
+            setTimeout(() => {
+                try {
+                    const games = JSON.parse(VGAL.getGames());
+                    loadingIndicator.style.display = 'none';
+
+                    if (games.length === 0) {
+                        container.innerHTML = '<p style="text-align:center; color: var(--text-muted);">未找到任何游戏。请将游戏文件夹放置在 vgal/ 目录下。</p>';
+                        return;
+                    }
+
+                    games.forEach(game => {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.onclick = () => VGAL.startGame(game.name);
+
+                        const img = document.createElement('img');
+                        img.className = 'card-image';
+                        img.src = game.icon ? `file://${game.icon}` : DEFAULT_ICON_BG;
+                        img.alt = game.name;
+                        img.onerror = () => { 
+                            img.src = DEFAULT_ICON_BG; 
+                            img.style.backgroundColor = '#000';
+                        };
+
+                        const body = document.createElement('div');
+                        body.className = 'card-body';
+                        
+                        const title = document.createElement('h3');
+                        title.className = 'card-title';
+                        title.textContent = game.name;
+
+                        const actions = document.createElement('div');
+                        actions.className = 'card-actions';
+
+                        const startButton = document.createElement('button');
+                        startButton.className = 'btn btn-primary';
+                        startButton.textContent = '启动游戏';
+                        startButton.style.flex = '2'; // 占据更多空间
+                        startButton.onclick = (e) => {
+                            e.stopPropagation();
+                            VGAL.startGame(game.name);
+                        };
+
+                        const loadButton = document.createElement('button');
+                        loadButton.className = 'btn btn-secondary';
+                        loadButton.textContent = '读档';
+                        loadButton.style.flex = '1';
+                        loadButton.onclick = (e) => {
+                            e.stopPropagation();
+                            VGAL.openLoadData(game.name);
+                        };
+
+                        actions.appendChild(startButton);
+actions.appendChild(loadButton);
+
+                        body.appendChild(title);
+                        card.appendChild(img);
+                        card.appendChild(body);
+                        card.appendChild(actions); // 将按钮层放在最上
+                        container.appendChild(card);
+                    });
+                } catch (e) {
+                    loadingIndicator.style.display = 'none';
+                    container.innerHTML = `<p style="text-align:center; color: var(--danger-color);">加载游戏列表时出错: ${e.message}</p>`;
+                    console.error(e);
+                }
+            }, 100); // 延迟100毫秒执行
+        }
     </script>
 </body>
 </html>
