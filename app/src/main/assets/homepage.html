@@ -2,279 +2,392 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>游戏列表</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VGal 游戏列表</title>
     <style>
-        html, body {
-            height: 100%;
-        }
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            background: #f0f0f0;
-            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-            color: #333;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
+        :root {
+            --bg-gradient-start: #1a202c;
+            --bg-gradient-end: #2d3748;
+            --card-bg: rgba(45, 55, 72, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --card-hover-bg: rgba(74, 85, 104, 0.8);
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --primary-accent: #4299e1;
+            --primary-accent-hover: #2b6cb0;
+            --success-accent: #48bb78;
+            --success-accent-hover: #38a169;
         }
 
+        * {
+            -webkit-tap-highlight-color: transparent; /* 移除Android触摸高亮 */
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end)) fixed;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            color: var(--text-primary);
+            overflow-y: auto;
+            align-items: center;
+            padding: 16px;
+            box-sizing: border-box;
+            overscroll-behavior: contain; /* 防止整页下拉刷新 */
+        }
+
+        /* 标题栏样式 */
         .title-bar {
-            width: 96vw;
-            max-width: 900px;
-            margin: 2vh auto 1vh auto;
+            width: 94%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            padding: 2vh 4vw;
+            padding: 15px 20px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); /* 兼容Safari */
+            z-index: 2;
         }
+
         .title {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #222;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-primary);
         }
+
         .settings-dropdown {
             position: relative;
             display: inline-block;
         }
+
         .settings-btn {
-            background: none;
-            border: none;
-            border-radius: 99px;
-            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
             cursor: pointer;
-            transition: background 0.2s;
+            padding: 10px; /* 增大触摸区域 */
+            transition: background-color 0.2s;
+            color: var(--text-primary);
+            min-width: 44px; /* 安卓最小触摸区域 */
+            min-height: 44px; /* 安卓最小触摸区域 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .settings-btn:active,
-        .settings-btn:focus {
-            background: #eee;
+
+        .settings-btn:hover, .settings-btn:active {
+            background-color: var(--card-hover-bg);
         }
+
         .settings-icon {
-            width: 28px;
-            height: 28px;
-            fill: #666;
-            display: block;
+            width: 24px;
+            height: 24px;
+            fill: var(--text-primary);
         }
+
         .dropdown-content {
             display: none;
             position: absolute;
             right: 0;
-            top: 110%;
-            background: #fff;
-            min-width: 170px;
-            box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+            background-color: var(--bg-gradient-end);
+            min-width: 180px; /* 增大触摸区域宽度 */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
             border-radius: 10px;
-            z-index: 10;
-            padding: 6px 0;
+            border: 1px solid var(--card-border);
+            z-index: 3;
+            padding: 8px 0;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
+
         .dropdown-content.show {
             display: block;
         }
+
         .dropdown-item {
             display: block;
-            padding: 13px 22px;
-            font-size: 1.05rem;
-            color: #333;
+            padding: 14px 16px; /* 增大触摸区域高度 */
             text-decoration: none;
-            border-radius: 6px;
-            transition: background 0.18s;
+            color: var(--text-primary);
+            transition: background-color 0.2s;
             cursor: pointer;
-        }
-        .dropdown-item:active,
-        .dropdown-item:hover {
-            background: #f0f0f0;
+            border-radius: 4px;
+            margin: 0 4px;
         }
 
+        .dropdown-item:hover, .dropdown-item:active {
+            background-color: var(--primary-accent);
+        }
+
+        /* 游戏容器样式 */
         .container {
-            width: 96vw;
-            max-width: 900px;
-            margin: 0 auto 3vh auto;
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 0 16px 4px rgba(0,0,0,0.07);
-            padding: 3vw 1vw 3vw 1vw;
+            width: 94%;
+            padding: 20px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1;
         }
 
-        /* 通用行样式 */
+        /* 行样式 */
         .row {
             display: flex;
-            justify-content: flex-start;
-            align-items: stretch;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 20px;
             width: 100%;
-            gap: 4vw;
-            margin-bottom: 2vw;
         }
 
-        /* 公共icon-wrapper样式 */
+        /* 游戏图标包装器 */
         .icon-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            flex: 1 1 0;
-            min-width: 0;
+            position: relative;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
         }
 
-        /* 卡片样式（带触摸反馈和阴影） */
+        .icon-wrapper:active {
+            transform: scale(0.98); /* 安卓触摸反馈 */
+        }
+
+        /* 游戏图标 */
         .icon {
             position: relative;
-            width: 100%;
-            background: #f4f8ff;
-            border-radius: 11px;
+            border-radius: 12px;
             overflow: hidden;
-            transition: box-shadow 0.22s, transform 0.20s;
-            box-shadow: 0 2px 8px rgba(80,110,180,0.08);
+            background-color: rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--card-border);
+            transition: box-shadow 0.3s;
+            height: 100%;
         }
-        .icon-wrapper:active .icon,
-        .icon-wrapper:focus .icon {
-            transform: scale(0.98);
-            box-shadow: 0 2px 16px rgba(50,90,200,0.11);
+
+        .icon:active {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary-accent);
         }
+
         .icon img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            background: #dde4ef;
             border-radius: 10px;
-            display: block;
+            transition: opacity 0.3s;
+            will-change: transform; /* 优化GPU加速 */
         }
+
         .icon-label {
             position: absolute;
-            left: 0;
             bottom: 0;
+            left: 0;
             width: 100%;
-            background: rgba(255,255,255,0.92);
-            font-size: 1.1rem;
-            color: #333;
+            padding: 10px 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            color: white;
             text-align: center;
-            padding: 7px 0 4px 0;
-            letter-spacing: 0.05em;
             font-weight: 500;
-            border-radius: 0 0 10px 10px;
-            pointer-events: none;
+            transition: transform 0.3s ease;
         }
+        
         .icon-actions {
             position: absolute;
-            left: 0; right: 0; bottom: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
             display: flex;
-            gap: 6px;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
             justify-content: center;
-            padding: 8px 0;
-            background: rgba(0, 0, 0, 0.80);
-            backdrop-filter: blur(3px);
-            transform: translateY(110%);
-            transition: transform 0.32s;
-            border-radius: 0 0 10px 10px;
         }
+
+        .icon-wrapper:hover .icon-actions,
         .icon-wrapper:active .icon-actions,
-        .icon-wrapper:hover .icon-actions {
+        .icon-wrapper.touch-active .icon-actions {
             transform: translateY(0);
         }
+
+        .icon-wrapper:hover .icon-label,
         .icon-wrapper:active .icon-label,
-        .icon-wrapper:hover .icon-label {
-            transform: translateY(100%);
-            opacity: 0;
-            transition: transform 0.32s, opacity 0.2s;
+        .icon-wrapper.touch-active .icon-label {
+            transform: translateY(-100%);
         }
 
         .action-btn {
-            padding: 8px 18px;
+            padding: 10px 16px;
             border: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            font-weight: 600;
-            background: #2563eb;
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(70,100,200,0.07);
-            letter-spacing: 0.02em;
-            margin: 0 2px;
-            transition: background 0.16s;
-        }
-        .action-btn:active {
-            background: #0a48b3;
-        }
-        .load-btn {
-            background: #10b981;
-        }
-        .load-btn:active {
-            background: #059669;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: var(--primary-accent);
+            color: white;
+            min-height: 44px;
+            min-width: 80px;
         }
 
-        /* ================================ */
-        /*  单列表（16:9）布局  */
-        .single .row {
-            gap: 0;
-            margin-bottom: 3vw;
+        .action-btn:hover, .action-btn:active {
+            background: var(--primary-accent-hover);
         }
+
+        .load-btn {
+            background: var(--success-accent);
+        }
+
+        .load-btn:hover, .load-btn:active {
+            background: var(--success-accent-hover);
+        }
+
+        /* 布局特定样式 - 保留原始实现 */
+        /* 单列视图 - 16:9 */
+        .single .row {
+            flex-direction: column;
+        }
+        
         .single .icon-wrapper {
             width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 比例 */
         }
+        
         .single .icon {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            aspect-ratio: 16/9;
-            min-height: 28vw;
-            max-height: 45vw;
+            height: 100%;
         }
 
-        /* ================================ */
-        /*  双列表（4:3）布局  */
-        .double .row {
-            gap: 4vw;
-            margin-bottom: 3vw;
-        }
+        /* 双列视图 - 4:3 */
         .double .icon-wrapper {
-            width: 48.5%;
+            width: 48%;
+            height: 0;
+            padding-bottom: 36%; /* 4:3 比例 */
         }
+        
         .double .icon {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            aspect-ratio: 4/3;
-            min-height: 20vw;
-            max-height: 32vw;
+            height: 100%;
         }
 
-        /* ================================ */
-        /*  网格（1:1）布局，4列优先，窄屏2列 */
-        .grid .row {
-            gap: 4vw;
-            margin-bottom: 3vw;
-        }
+        /* 网格视图 - 1:1 */
         .grid .icon-wrapper {
-            width: 22.5%;
+            width: 23%;
+            height: 0;
+            padding-bottom: 23%; /* 1:1 比例 */
         }
+        
         .grid .icon {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            aspect-ratio: 1/1;
-            min-height: 18vw;
-            max-height: 23vw;
+            height: 100%;
         }
-        @media (max-width: 900px) {
-            .grid .icon-wrapper { width: 31.5%; }
+        
+        .grid .action-btn {
+            padding: 8px 12px;
+            font-size: 12px;
+            min-width: 60px;
+            min-height: 36px;
         }
-        @media (max-width: 650px) {
-            .grid .icon-wrapper, .double .icon-wrapper { width: 48.5%; }
+        
+        .grid .icon-label {
+            font-size: 12px;
+            padding: 8px 0;
         }
-        @media (max-width: 480px) {
-            .container, .title-bar { width: 99vw; padding-left: 2vw; padding-right: 2vw;}
-            .single .icon, .double .icon, .grid .icon {
-                min-height: 22vw;
+        
+        .grid .icon-actions {
+            padding: 8px;
+            gap: 6px;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .title-bar, .container {
+                width: 95%;
             }
-            .row { gap: 2vw; margin-bottom: 2vw;}
+            
+            .double .row {
+                flex-wrap: wrap;
+            }
+            
+            .double .icon-wrapper {
+                width: 48%;
+                padding-bottom: 36%;
+                margin-bottom: 16px;
+            }
+            
+            .grid .icon-wrapper {
+                width: 31%;
+                padding-bottom: 31%;
+                margin-bottom: 16px;
+            }
+            
+            .title {
+                font-size: 20px;
+            }
         }
-        @media (max-width: 380px) {
-            .title { font-size: 1.3rem;}
-            .dropdown-item { font-size: 0.95rem; }
+        
+        @media (max-width: 480px) {
+            .title-bar, .container {
+                width: 96%;
+                padding: 12px;
+            }
+            
+            .grid .icon-wrapper {
+                width: 48%;
+                padding-bottom: 48%;
+            }
+            
+            .title-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .settings-dropdown {
+                align-self: flex-end;
+            }
+            
+            body {
+                padding: 8px;
+            }
+            
+            .row {
+                margin-bottom: 10px;
+            }
+            
+            .icon-wrapper {
+                margin-bottom: 10px;
+            }
         }
-        /* 竖屏优化：网格2列 */
-        @media (max-width: 650px) and (orientation: portrait) {
-            .grid .icon-wrapper { width: 48.5%; }
-        }
-        /* 横屏优化：网格4列，双列表2列 */
-        @media (orientation: landscape) and (min-width: 650px) {
-            .grid .icon-wrapper { width: 22.5%; }
-            .double .icon-wrapper { width: 48.5%; }
+        
+        /* 小屏幕安卓设备的特殊处理 */
+        @media (max-width: 360px) {
+            .grid .icon-wrapper {
+                width: 100%;
+                padding-bottom: 100%;
+            }
+            
+            .double .icon-wrapper {
+                width: 100%;
+                padding-bottom: 75%;
+            }
         }
     </style>
 </head>
@@ -282,7 +395,7 @@
     <div class="title-bar">
         <div class="title">游戏列表</div>
         <div class="settings-dropdown">
-            <button class="settings-btn" onclick="toggleDropdown()" aria-label="切换布局">
+            <button class="settings-btn" onclick="toggleDropdown()">
                 <svg class="settings-icon" viewBox="0 0 24 24">
                     <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
                 </svg>
@@ -290,66 +403,117 @@
             <div class="dropdown-content" id="settingsDropdown">
                 <a class="dropdown-item" onclick="setLayout('single')">16:9 单列表视图</a>
                 <a class="dropdown-item" onclick="setLayout('double')">4:3 双列表视图</a>
-                <a class="dropdown-item" onclick="setLayout('grid')">1x1 网格视图</a>
+                <a class="dropdown-item" onclick="setLayout('grid')">1:1 网格视图</a>
             </div>
         </div>
     </div>
     <div class="container single" id="game-container"></div>
+
     <script>
-        const DEFAULT_ICON = "https://via.placeholder.com/1920x1080?text=VGAL";
-        // const VGAL = { ... } // Android 端由原生注入
+        const DEFAULT_ICON = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiA5Ij4KICA8cmVjdCB3aWR0aD0iMTYiIGhlaWdodD0iOSIgZmlsbD0iIzJkMzc0OCIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjYTBiYWUwIiBmb250LXNpemU9IjEiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIj5ObyBJY29uPC90ZXh0Pgo8L3N2Zz4=";
+        
         function toggleDropdown() {
             document.getElementById('settingsDropdown').classList.toggle('show');
         }
+
+        // 点击外部区域关闭下拉菜单
         window.onclick = function(event) {
-            if (!event.target.closest('.settings-dropdown')) {
-                document.getElementById('settingsDropdown').classList.remove('show');
+            if (!event.target.matches('.settings-btn') && !event.target.matches('.settings-icon')) {
+                const dropdowns = document.getElementsByClassName('dropdown-content');
+                for (const dropdown of dropdowns) {
+                    if (dropdown.classList.contains('show')) {
+                        dropdown.classList.remove('show');
+                    }
+                }
             }
-        };
+        }
+
+        // 为移动触摸体验添加特定的触摸事件处理
+        function setupTouchEvents() {
+            const iconWrappers = document.querySelectorAll('.icon-wrapper');
+            
+            iconWrappers.forEach(wrapper => {
+                wrapper.addEventListener('touchstart', function() {
+                    this.classList.add('touch-active');
+                });
+                
+                wrapper.addEventListener('touchend', function() {
+                    // 延迟移除类，以确保动画效果完成
+                    setTimeout(() => {
+                        this.classList.remove('touch-active');
+                    }, 300);
+                });
+                
+                wrapper.addEventListener('touchcancel', function() {
+                    this.classList.remove('touch-active');
+                });
+            });
+        }
+
         function saveLayout(layout) {
             localStorage.setItem('preferred-layout', layout);
         }
+
         function getLayout() {
             return localStorage.getItem('preferred-layout') || 'single';
         }
+
+        // 布局设置函数
         function setLayout(layout) {
-            document.getElementById('settingsDropdown').classList.remove('show');
+            const dropdown = document.getElementById('settingsDropdown');
+            dropdown.classList.remove('show');
+            
             const container = document.getElementById('game-container');
             container.className = `container ${layout}`;
             container.innerHTML = '';
             saveLayout(layout);
-            // 获取数据
-            let games = [];
-            try {
-                games = JSON.parse(VGAL.getGames());
-            } catch (e) { games = []; }
-            if (!Array.isArray(games)) games = [];
-            let iconsPerRow = layout === 'single' ? 1 : layout === 'double' ? 2 : 4;
-            // 动态自适应横竖屏
-            if (layout === 'grid') {
-                if (window.innerWidth <= 650) iconsPerRow = 2;
-                else if (window.innerWidth > 1200) iconsPerRow = 5;
-                else iconsPerRow = 4;
+
+            const games = JSON.parse(VGAL.getGames());
+            let iconsPerRow;
+            
+            // 根据布局和设备宽度确定每行显示数量
+            if (layout === 'single') {
+                iconsPerRow = 1;
+            } else if (layout === 'double') {
+                iconsPerRow = window.innerWidth <= 480 ? 1 : 2;
+            } else { // grid
+                if (window.innerWidth <= 360) {
+                    iconsPerRow = 1;
+                } else if (window.innerWidth <= 480) {
+                    iconsPerRow = 2;
+                } else if (window.innerWidth <= 768) {
+                    iconsPerRow = 3;
+                } else {
+                    iconsPerRow = 4;
+                }
             }
+
             for (let i = 0; i < games.length; i += iconsPerRow) {
                 const row = document.createElement('div');
                 row.className = 'row';
+
                 for (let j = 0; j < iconsPerRow && (i + j) < games.length; j++) {
                     const game = games[i + j];
                     const iconWrapper = document.createElement('div');
                     iconWrapper.className = 'icon-wrapper';
+
                     const icon = document.createElement('div');
                     icon.className = 'icon';
+
                     const img = document.createElement('img');
                     img.src = game.icon || DEFAULT_ICON;
                     img.alt = game.name;
+                    img.loading = "lazy"; // 延迟加载
+                    img.decoding = "async"; // 异步解码，提高性能
                     img.onerror = () => { img.src = DEFAULT_ICON; };
-                    img.draggable = false;
+
                     const iconLabel = document.createElement('div');
                     iconLabel.className = 'icon-label';
                     iconLabel.textContent = game.name;
+
                     const actions = document.createElement('div');
                     actions.className = 'icon-actions';
+
                     const startButton = document.createElement('button');
                     startButton.className = 'action-btn start-btn';
                     startButton.textContent = '启动游戏';
@@ -357,6 +521,7 @@
                         e.stopPropagation();
                         VGAL.startGame(game.name);
                     };
+
                     const loadButton = document.createElement('button');
                     loadButton.className = 'action-btn load-btn';
                     loadButton.textContent = '读取存档';
@@ -364,21 +529,34 @@
                         e.stopPropagation();
                         VGAL.openLoadData(game.name);
                     };
+
                     actions.appendChild(startButton);
                     actions.appendChild(loadButton);
+
                     icon.appendChild(img);
                     icon.appendChild(iconLabel);
                     icon.appendChild(actions);
                     iconWrapper.appendChild(icon);
                     row.appendChild(iconWrapper);
                 }
+
                 container.appendChild(row);
             }
+            
+            // 为移动设备添加触摸事件
+            setupTouchEvents();
         }
-        // 安卓横竖屏切换时自适应
-        window.addEventListener('resize', () => setLayout(getLayout()));
+
+        // 监听窗口大小变化以适应响应式布局
+        window.addEventListener('resize', function() {
+            const currentLayout = getLayout();
+            setLayout(currentLayout);
+        });
+
+        // 页面加载时应用保存的布局
         document.addEventListener('DOMContentLoaded', () => {
-            setLayout(getLayout());
+            const savedLayout = getLayout();
+            setLayout(savedLayout);
         });
     </script>
 </body>
