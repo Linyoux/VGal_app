@@ -66,7 +66,7 @@
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             border-radius: 10px;
             border: 1px solid var(--card-border);
-            z-index: 999; /* 提高，避免被遮挡 */
+            z-index: 999; /* 保证下拉菜单不被遮挡 */
             padding: 8px 0;
             backdrop-filter: blur(10px);
         }
@@ -163,16 +163,40 @@
         .single .icon { width: 100%; padding-top: 56.25%; } /* 16:9 */
         .double .icon-wrapper { flex: 1 1 50%; max-width: 50%; }
         .double .icon { width: 100%; padding-top: 75%; } /* 4:3 */
-        .grid .icon-wrapper { flex: 1 1 25%; max-width: 25%; }
-        .grid .icon { width: 100%; padding-top: 100%; } /* 1:1 */
 
-        /* 保证切换时高度也自适应 */
-        .row .icon-wrapper { min-width: 0; }
-
+        /* ======= 网格视图1:1修复部分 ======= */
+        .grid .row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .grid .icon-wrapper {
+            flex: 1 1 0;
+            max-width: 25%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+        .grid .icon {
+            width: 100%;
+            padding-top: 100%; /* 正方形 */
+            position: relative;
+        }
+        .grid .icon img {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        /* grid 视图下label字号略小 */
+        .grid .icon-label {
+            font-size: 13px;
+            padding: 6px 0;
+        }
         /* 响应式适配 */
         @media (max-width: 900px) {
             .double .icon-wrapper { flex-basis: 100%; max-width: 100%; }
-            .grid .icon-wrapper { flex-basis: 50%; max-width: 50%; }
+            .grid .icon-wrapper { max-width: 50%; }
             .container, .title-bar { width: 98%; }
         }
         @media (max-width: 600px) {
@@ -200,6 +224,29 @@
     </div>
     <div class="container single" id="game-container"></div>
     <script>
+        // 本地测试用假VGAL对象，仅供你本地调试用。正式环境请删除下方VGAL定义
+        // 并确保VGAL.getGames()返回JSON字符串，内容形如
+        // [{name:"游戏A", icon:"xxx.png"}, ...]
+        if(!window.VGAL){
+            window.VGAL = {
+                getGames: function(){
+                    return JSON.stringify([
+                        {name:"游戏A", icon:"https://placehold.co/400x400?text=A"},
+                        {name:"游戏B", icon:"https://placehold.co/400x400?text=B"},
+                        {name:"游戏C", icon:"https://placehold.co/400x400?text=C"},
+                        {name:"游戏D", icon:"https://placehold.co/400x400?text=D"},
+                        {name:"游戏E", icon:"https://placehold.co/400x400?text=E"},
+                        {name:"游戏F", icon:"https://placehold.co/400x400?text=F"},
+                        {name:"游戏G", icon:"https://placehold.co/400x400?text=G"},
+                        {name:"游戏H", icon:"https://placehold.co/400x400?text=H"}
+                    ]);
+                },
+                startGame: function(name){ alert("启动游戏："+name); },
+                openLoadData: function(name){ alert("读取存档："+name); }
+            }
+        }
+        // --- end test VGAL
+
         const DEFAULT_ICON = "https://via.placeholder.com/1920x1080";
         function toggleDropdown() {
             document.getElementById('settingsDropdown').classList.toggle('show');
