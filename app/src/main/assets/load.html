@@ -6,362 +6,423 @@
     <title>游戏读档</title>
     <style>
         :root {
-            --bg-color: #1c1c28;
-            --card-bg: rgba(40, 44, 52, 0.8);
-            --text-color: #ffffff;
-            --accent-color: #4f8df5;
-            --success-color: #34a853;
-            --danger-color: #ea4335;
-        }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+            --bg-gradient-start: #1a202c;
+            --bg-gradient-end: #2d3748;
+            --card-bg: rgba(45, 55, 72, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --card-hover-bg: rgba(74, 85, 104, 0.8);
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --primary-accent: #4299e1;
+            --primary-accent-hover: #2b6cb0;
+            --danger-accent: #e53e3e;
+            --danger-accent-hover: #c53030;
+            --success-accent: #48bb78;
+            --success-accent-hover: #38a169;
         }
 
         body {
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            color: var(--text-primary);
             margin: 0;
             padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             min-height: 100vh;
             overflow-x: hidden;
         }
 
-        .container {
+        .main-container {
             display: flex;
             flex-direction: column;
             height: 100vh;
             padding: 16px;
+            box-sizing: border-box;
         }
 
-        .header {
+        .title-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--card-border);
+            flex-shrink: 0;
         }
 
-        .header-title {
-            font-size: 20px;
-            font-weight: bold;
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
         }
 
         .btn {
             padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            background-color: var(--accent-color);
-            color: white;
-            font-weight: 500;
-            font-size: 15px;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
             cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
         }
-
-        .content {
+        .btn:hover {
+            background: var(--primary-accent);
+            border-color: var(--primary-accent);
+        }
+        
+        .content-area {
             flex-grow: 1;
             overflow-y: auto;
+            padding-right: 8px;
             margin-bottom: 16px;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--card-border);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: var(--primary-accent);
         }
 
         .load-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         }
 
-        .save-slot {
-            background-color: var(--card-bg);
-            border-radius: 8px;
+        .slot-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s;
-            opacity: 0.5;
+            transition: all 0.2s ease-in-out;
+            backdrop-filter: blur(8px);
+            cursor: pointer;
+            opacity: 0.6; /* 未存档的显示为半透明 */
         }
-        
-        .save-slot.has-data {
+        .slot-card.has-data {
             opacity: 1;
         }
+        .slot-card.has-data:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-color: var(--primary-accent);
+        }
         
-        .save-slot.has-data:active {
-            transform: scale(0.98);
-        }
-
-        .slot-image {
+        .thumbnail {
             width: 100%;
-            aspect-ratio: 16/9;
+            aspect-ratio: 16 / 9;
             object-fit: cover;
-            background-color: #2a2a38;
+            background-color: var(--bg-gradient-start);
+            border-bottom: 1px solid var(--card-border);
         }
 
+        .details {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-grow: 1;
+        }
         .slot-info {
-            padding: 8px;
+            font-size: 14px;
+            font-weight: 600;
         }
-
-        .slot-title {
-            font-size: 15px;
-            margin: 0 0 4px 0;
-            font-weight: 500;
-        }
-
-        .slot-time {
+        .timestamp {
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
+            color: var(--text-secondary);
+            flex-grow: 1;
+        }
+        .script-name {
+            font-size: 12px;
+            color: var(--text-secondary);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
-        .empty-slot {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            min-height: 80px;
-            color: rgba(255, 255, 255, 0.5);
+        .empty-text {
+            text-align: center;
+            color: var(--text-secondary);
+            margin: auto;
         }
-
+        
         .pagination {
+            flex-shrink: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 12px;
+            border-top: 1px solid var(--card-border);
         }
-
         .page-info {
             margin: 0 12px;
-            font-size: 15px;
+            font-size: 14px;
         }
-
-        .btn:disabled {
+        .pagination .btn[disabled] {
             opacity: 0.5;
-            cursor: default;
+            cursor: not-allowed;
+            background: var(--card-bg);
         }
 
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
+            z-index: 10;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
             align-items: center;
             justify-content: center;
         }
-
         .modal.show {
             display: flex;
         }
-
         .modal-content {
-            width: 85%;
-            max-width: 320px;
-            background-color: var(--card-bg);
-            border-radius: 12px;
+            background: var(--bg-gradient-end);
             padding: 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--card-border);
+            width: 90%;
+            max-width: 320px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
-
         .modal-header {
             font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
         }
-
         .modal-body {
-            margin-bottom: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
             line-height: 1.5;
-            font-size: 15px;
         }
-
-        .modal-actions {
+        .modal-buttons {
             display: flex;
             justify-content: flex-end;
-            gap: 12px;
+            margin-top: 20px;
+            gap: 10px;
         }
-
-        .btn-cancel {
-            background-color: var(--danger-color);
-        }
-
-        .btn-confirm {
-            background-color: var(--success-color);
-        }
-
-        /* 响应式布局 */
+        .confirm-button { background-color: var(--primary-accent); border-color: var(--primary-accent); }
+        .confirm-button:hover { background-color: var(--primary-accent-hover); border-color: var(--primary-accent-hover); }
+        .cancel-button { background-color: var(--danger-accent); border-color: var(--danger-accent); }
+        .cancel-button:hover { background-color: var(--danger-accent-hover); border-color: var(--danger-accent-hover); }
+        
         @media (orientation: landscape) {
             .load-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                grid-template-columns: repeat(5, 1fr);
             }
         }
-
-        /* 较大屏幕设备 */
-        @media (min-width: 600px) {
+        
+        @media (orientation: portrait) {
             .load-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .title-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .title {
+                font-size: 20px;
+            }
+            .btn {
+                align-self: flex-end;
+                font-size: 13px;
+                padding: 6px 12px;
+            }
+            .main-container {
+                padding: 12px;
+            }
+            .pagination .btn {
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+            .page-info {
+                font-size: 13px;
+            }
+        }
+        
+        /* 适配小屏幕的特殊处理 */
+        @media (max-height: 500px) {
+            .main-container {
+                padding: 8px;
+            }
+            .title-bar {
+                margin-bottom: 8px;
+                padding-bottom: 8px;
+            }
+            .title {
+                font-size: 18px;
+            }
+            .content-area {
+                margin-bottom: 8px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-title">游戏读档</div>
+    <div class="main-container">
+        <div class="title-bar">
+            <h1 class="title" id="page-title">游戏读档</h1>
             <button class="btn" onclick="VGAL.Close()">返回游戏</button>
         </div>
-        
-        <div class="content">
-            <div class="load-grid" id="load-grid"></div>
+        <div class="content-area">
+            <div class="load-grid" id="slots-grid"></div>
         </div>
-        
-        <div class="pagination">
-            <button id="prev-page" class="btn" disabled>上一页</button>
-            <div class="page-info" id="page-info">第 1 / 10 页</div>
-            <button id="next-page" class="btn">下一页</button>
+        <div class="pagination" id="pagination">
+            <button id="prev-button" class="btn" disabled>上一页</button>
+            <span id="page-info" class="page-info">第 1 / 10 页</span>
+            <button id="next-button" class="btn">下一页</button>
         </div>
     </div>
 
-    <div id="confirm-modal" class="modal">
+    <div id="confirmationModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">确认读取</div>
-            <div class="modal-body">确定要读取此存档吗？当前游戏进度将不会被保存。</div>
-            <div class="modal-actions">
-                <button class="btn btn-cancel" id="cancel-load">取消</button>
-                <button class="btn btn-confirm" id="confirm-load">确认</button>
+            <div class="modal-header" id="modal-header">确认读取</div>
+            <div id="modal-body">您确定要读取这个存档吗？当前游戏进度将不会被保存。</div>
+            <div class="modal-buttons">
+                <button class="btn cancel-button" id="cancel-button">取消</button>
+                <button class="btn confirm-button" id="confirm-button">确认</button>
             </div>
         </div>
     </div>
 
     <script>
         const totalPages = 10;
-        const slotsPerPage = 10;
+        const itemsPerPage = 10;
         let currentPage = 1;
-        let selectedSlot = null;
-        let saveData = {};
+        let currentSlot = null;
+        let allSaveData = {};
 
-        // 渲染存档列表
-        function renderLoadSlots() {
-            const grid = document.getElementById('load-grid');
+        function renderSlots() {
+            const grid = document.getElementById('slots-grid');
             grid.innerHTML = '';
             
-            const startSlot = (currentPage - 1) * slotsPerPage + 1;
-            const endSlot = startSlot + slotsPerPage - 1;
-            
+            const startSlot = (currentPage - 1) * itemsPerPage + 1;
+            const endSlot = startSlot + itemsPerPage - 1;
+
             for (let i = startSlot; i <= endSlot; i++) {
-                const slot = document.createElement('div');
-                slot.className = 'save-slot';
-                
-                if (saveData[i]) {
-                    slot.classList.add('has-data');
-                    slot.onclick = () => showConfirmDialog(i);
-                    const data = saveData[i];
+                const slotData = allSaveData[i];
+                const card = document.createElement('div');
+                card.className = 'slot-card';
+
+                if (slotData) {
+                    card.classList.add('has-data');
+                    card.onclick = () => showConfirmationModal(i);
                     
-                    const img = document.createElement('img');
-                    img.className = 'slot-image';
-                    img.src = "data:image/png;base64," + data.bmpPath;
-                    img.alt = "存档预览";
-                    img.loading = "lazy";
+                    const thumbnail = document.createElement('img');
+                    thumbnail.className = 'thumbnail';
+                    thumbnail.src = "data:image/png;base64," + slotData.bmpPath;
+                    thumbnail.alt = `存档 ${i}`;
+                    thumbnail.loading = "lazy"; // 延迟加载
+
+                    const details = document.createElement('div');
+                    details.className = 'details';
                     
                     const info = document.createElement('div');
                     info.className = 'slot-info';
-                    
-                    const title = document.createElement('div');
-                    title.className = 'slot-title';
-                    title.textContent = `存档 #${i}`;
+                    info.textContent = `存档 #${i}`;
                     
                     const time = document.createElement('div');
-                    time.className = 'slot-time';
-                    time.textContent = new Date(data.saveTime).toLocaleString('zh-CN');
-                    
-                    info.appendChild(title);
-                    info.appendChild(time);
-                    slot.appendChild(img);
-                    slot.appendChild(info);
+                    time.className = 'timestamp';
+                    time.textContent = new Date(slotData.saveTime).toLocaleString('zh-CN');
+
+                    const script = document.createElement('div');
+                    script.className = 'script-name';
+                    script.textContent = `场景: ${slotData.scriptName}`;
+
+                    details.appendChild(info);
+                    details.appendChild(time);
+                    details.appendChild(script);
+                    card.appendChild(thumbnail);
+                    card.appendChild(details);
                 } else {
-                    const empty = document.createElement('div');
-                    empty.className = 'empty-slot';
-                    empty.textContent = '无存档';
-                    slot.appendChild(empty);
+                    card.style.cursor = 'not-allowed';
+                    const details = document.createElement('div');
+                    details.className = 'details';
+                    const text = document.createElement('div');
+                    text.className = 'empty-text';
+                    text.textContent = '空存档';
+                    details.appendChild(text);
+                    card.appendChild(details);
                 }
-                
-                grid.appendChild(slot);
+                grid.appendChild(card);
             }
         }
         
-        // 更新分页信息
         function updatePagination() {
             document.getElementById('page-info').textContent = `第 ${currentPage} / ${totalPages} 页`;
-            document.getElementById('prev-page').disabled = currentPage === 1;
-            document.getElementById('next-page').disabled = currentPage === totalPages;
+            document.getElementById('prev-button').disabled = currentPage === 1;
+            document.getElementById('next-button').disabled = currentPage === totalPages;
         }
         
-        // 显示确认对话框
-        function showConfirmDialog(slot) {
-            selectedSlot = slot;
-            document.getElementById('confirm-modal').classList.add('show');
+        function showConfirmationModal(slot) {
+            currentSlot = slot;
+            const modal = document.getElementById('confirmationModal');
+            modal.classList.add('show');
         }
-        
-        // 隐藏确认对话框
-        function hideConfirmDialog() {
-            document.getElementById('confirm-modal').classList.remove('show');
-            selectedSlot = null;
+
+        function hideConfirmationModal() {
+            const modal = document.getElementById('confirmationModal');
+            modal.classList.remove('show');
+            currentSlot = null;
         }
-        
-        // 加载存档
-        function loadGameData() {
-            if (selectedSlot !== null) {
-                VGAL.LoadData(selectedSlot);
-                // 读档操作由原生代码处理后续流程
-            }
-        }
-        
-        // 页面加载完成后初始化
+
         document.addEventListener('DOMContentLoaded', () => {
-            // 获取存档数据
             try {
-                saveData = JSON.parse(VGAL.getSaveData());
+                allSaveData = JSON.parse(VGAL.getSaveData());
             } catch (e) {
-                console.error("解析存档数据失败:", e);
-                saveData = {};
+                console.error("Failed to parse save data:", e);
+                allSaveData = {};
             }
-            
-            // 渲染初始页面
-            renderLoadSlots();
+
+            renderSlots();
             updatePagination();
             
-            // 绑定分页按钮事件
-            document.getElementById('prev-page').addEventListener('click', () => {
+            document.getElementById('prev-button').onclick = () => {
                 if (currentPage > 1) {
                     currentPage--;
-                    renderLoadSlots();
+                    renderSlots();
                     updatePagination();
                 }
-            });
+            };
             
-            document.getElementById('next-page').addEventListener('click', () => {
+            document.getElementById('next-button').onclick = () => {
                 if (currentPage < totalPages) {
                     currentPage++;
-                    renderLoadSlots();
+                    renderSlots();
                     updatePagination();
                 }
-            });
+            };
             
-            // 绑定确认对话框按钮事件
-            document.getElementById('cancel-load').addEventListener('click', hideConfirmDialog);
-            document.getElementById('confirm-load').addEventListener('click', loadGameData);
-            
-            // 点击对话框外部关闭
-            document.getElementById('confirm-modal').addEventListener('click', (e) => {
-                if (e.target === document.getElementById('confirm-modal')) {
-                    hideConfirmDialog();
+            document.getElementById('confirm-button').onclick = () => {
+                if (currentSlot !== null) {
+                    VGAL.LoadData(currentSlot);
+                    // 原生代码将处理加载后的操作
                 }
-            });
+            };
+
+            document.getElementById('cancel-button').onclick = hideConfirmationModal;
+            document.getElementById('confirmationModal').onclick = (e) => {
+                if (e.target.id === 'confirmationModal') {
+                    hideConfirmationModal();
+                }
+            };
         });
     </script>
 </body>

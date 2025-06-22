@@ -2,236 +2,384 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <title>游戏列表</title>
     <style>
-        :root {
-            --bg-color: #1c1c28;
-            --card-bg: rgba(40, 44, 52, 0.8);
-            --text-color: #ffffff;
-            --accent-color: #4f8df5;
-            --card-border: rgba(255, 255, 255, 0.1);
+        html, body {
+            height: 100%;
         }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
         body {
             margin: 0;
             padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             min-height: 100vh;
+            background: #f0f0f0;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            color: #333;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
 
-        .container {
-            padding: 16px;
-        }
-
-        .header {
+        .title-bar {
+            width: 96vw;
+            max-width: 900px;
+            margin: 2vh auto 1vh auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 2vh 4vw;
         }
-
-        .header-title {
-            font-size: 20px;
-            font-weight: bold;
+        .title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #222;
         }
-
-        .game-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
-        }
-
-        .game-card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        .settings-dropdown {
             position: relative;
+            display: inline-block;
         }
-
-        .game-image {
-            width: 100%;
-            aspect-ratio: 16/9;
-            object-fit: cover;
+        .settings-btn {
+            background: none;
+            border: none;
+            border-radius: 99px;
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .settings-btn:active,
+        .settings-btn:focus {
+            background: #eee;
+        }
+        .settings-icon {
+            width: 28px;
+            height: 28px;
+            fill: #666;
             display: block;
         }
-
-        .game-info {
+        .dropdown-content {
+            display: none;
             position: absolute;
-            bottom: 0;
-            left: 0;
             right: 0;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-            padding: 16px;
-            color: white;
+            top: 110%;
+            background: #fff;
+            min-width: 170px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+            border-radius: 10px;
+            z-index: 10;
+            padding: 6px 0;
+        }
+        .dropdown-content.show {
+            display: block;
+        }
+        .dropdown-item {
+            display: block;
+            padding: 13px 22px;
+            font-size: 1.05rem;
+            color: #333;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.18s;
+            cursor: pointer;
+        }
+        .dropdown-item:active,
+        .dropdown-item:hover {
+            background: #f0f0f0;
         }
 
-        .game-title {
-            font-size: 18px;
-            margin: 0 0 12px 0;
+        .container {
+            width: 96vw;
+            max-width: 900px;
+            margin: 0 auto 3vh auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 0 16px 4px rgba(0,0,0,0.07);
+            padding: 3vw 1vw 3vw 1vw;
         }
 
-        .game-actions {
+        /* 通用行样式 */
+        .row {
             display: flex;
-            gap: 8px;
+            justify-content: flex-start;
+            align-items: stretch;
+            width: 100%;
+            gap: 4vw;
+            margin-bottom: 2vw;
+        }
+
+        /* 公共icon-wrapper样式 */
+        .icon-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            flex: 1 1 0;
+            min-width: 0;
+        }
+
+        /* 卡片样式（带触摸反馈和阴影） */
+        .icon {
+            position: relative;
+            width: 100%;
+            background: #f4f8ff;
+            border-radius: 11px;
+            overflow: hidden;
+            transition: box-shadow 0.22s, transform 0.20s;
+            box-shadow: 0 2px 8px rgba(80,110,180,0.08);
+        }
+        .icon-wrapper:active .icon,
+        .icon-wrapper:focus .icon {
+            transform: scale(0.98);
+            box-shadow: 0 2px 16px rgba(50,90,200,0.11);
+        }
+        .icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #dde4ef;
+            border-radius: 10px;
+            display: block;
+        }
+        .icon-label {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.92);
+            font-size: 1.1rem;
+            color: #333;
+            text-align: center;
+            padding: 7px 0 4px 0;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+            border-radius: 0 0 10px 10px;
+            pointer-events: none;
+        }
+        .icon-actions {
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            padding: 8px 0;
+            background: rgba(0, 0, 0, 0.80);
+            backdrop-filter: blur(3px);
+            transform: translateY(110%);
+            transition: transform 0.32s;
+            border-radius: 0 0 10px 10px;
+        }
+        .icon-wrapper:active .icon-actions,
+        .icon-wrapper:hover .icon-actions {
+            transform: translateY(0);
+        }
+        .icon-wrapper:active .icon-label,
+        .icon-wrapper:hover .icon-label {
+            transform: translateY(100%);
+            opacity: 0;
+            transition: transform 0.32s, opacity 0.2s;
         }
 
         .action-btn {
-            flex: 1;
+            padding: 8px 18px;
             border: none;
-            border-radius: 4px;
-            padding: 10px 8px;
-            font-size: 15px;
-            font-weight: 500;
-            background-color: var(--accent-color);
-            color: white;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            background: #2563eb;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(70,100,200,0.07);
+            letter-spacing: 0.02em;
+            margin: 0 2px;
+            transition: background 0.16s;
         }
-
+        .action-btn:active {
+            background: #0a48b3;
+        }
         .load-btn {
-            background-color: #34a853;
+            background: #10b981;
+        }
+        .load-btn:active {
+            background: #059669;
         }
 
-        .empty-message {
-            padding: 32px;
-            text-align: center;
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            margin: 16px 0;
+        /* ================================ */
+        /*  单列表（16:9）布局  */
+        .single .row {
+            gap: 0;
+            margin-bottom: 3vw;
+        }
+        .single .icon-wrapper {
+            width: 100%;
+        }
+        .single .icon {
+            width: 100%;
+            aspect-ratio: 16/9;
+            min-height: 28vw;
+            max-height: 45vw;
         }
 
-        /* 针对不同屏幕大小的响应式调整 */
-        @media (orientation: landscape) {
-            .game-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        /* ================================ */
+        /*  双列表（4:3）布局  */
+        .double .row {
+            gap: 4vw;
+            margin-bottom: 3vw;
+        }
+        .double .icon-wrapper {
+            width: 48.5%;
+        }
+        .double .icon {
+            width: 100%;
+            aspect-ratio: 4/3;
+            min-height: 20vw;
+            max-height: 32vw;
         }
 
-        /* 较大屏幕的平板模式 */
-        @media (min-width: 600px) {
-            .game-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        /* ================================ */
+        /*  网格（1:1）布局，4列优先，窄屏2列 */
+        .grid .row {
+            gap: 4vw;
+            margin-bottom: 3vw;
         }
-
-        /* 更大的平板和小型折叠屏 */
-        @media (min-width: 840px) {
-            .game-grid {
-                grid-template-columns: repeat(3, 1fr);
+        .grid .icon-wrapper {
+            width: 22.5%;
+        }
+        .grid .icon {
+            width: 100%;
+            aspect-ratio: 1/1;
+            min-height: 18vw;
+            max-height: 23vw;
+        }
+        @media (max-width: 900px) {
+            .grid .icon-wrapper { width: 31.5%; }
+        }
+        @media (max-width: 650px) {
+            .grid .icon-wrapper, .double .icon-wrapper { width: 48.5%; }
+        }
+        @media (max-width: 480px) {
+            .container, .title-bar { width: 99vw; padding-left: 2vw; padding-right: 2vw;}
+            .single .icon, .double .icon, .grid .icon {
+                min-height: 22vw;
             }
-            .header-title {
-                font-size: 24px;
-            }
+            .row { gap: 2vw; margin-bottom: 2vw;}
+        }
+        @media (max-width: 380px) {
+            .title { font-size: 1.3rem;}
+            .dropdown-item { font-size: 0.95rem; }
+        }
+        /* 竖屏优化：网格2列 */
+        @media (max-width: 650px) and (orientation: portrait) {
+            .grid .icon-wrapper { width: 48.5%; }
+        }
+        /* 横屏优化：网格4列，双列表2列 */
+        @media (orientation: landscape) and (min-width: 650px) {
+            .grid .icon-wrapper { width: 22.5%; }
+            .double .icon-wrapper { width: 48.5%; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-title">游戏列表</div>
+    <div class="title-bar">
+        <div class="title">游戏列表</div>
+        <div class="settings-dropdown">
+            <button class="settings-btn" onclick="toggleDropdown()" aria-label="切换布局">
+                <svg class="settings-icon" viewBox="0 0 24 24">
+                    <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                </svg>
+            </button>
+            <div class="dropdown-content" id="settingsDropdown">
+                <a class="dropdown-item" onclick="setLayout('single')">16:9 单列表视图</a>
+                <a class="dropdown-item" onclick="setLayout('double')">4:3 双列表视图</a>
+                <a class="dropdown-item" onclick="setLayout('grid')">1x1 网格视图</a>
+            </div>
         </div>
-        <div class="game-grid" id="game-grid"></div>
     </div>
-
+    <div class="container single" id="game-container"></div>
     <script>
-        // 默认图标（使用base64编码的占位图像）
-        const DEFAULT_ICON = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTM1IiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjEzNSIgZmlsbD0iIzFjMWMyOCIvPjx0ZXh0IHg9IjEyMCIgeT0iNjcuNSIgZm9udC1mYW1pbHk9InN5c3RlbS11aSwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzlhYTBhNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+5peg5rOV5Yqg6L295Zu+5qCHPC90ZXh0Pjwvc3ZnPg==";
-
-        // 开发测试用的模拟数据，真实环境请注释掉
-        /*const VGAL = {
-            getGames: function() {
-                return JSON.stringify([
-                    { name: "测试游戏1", icon: null },
-                    { name: "测试游戏2", icon: "https://via.placeholder.com/400x225/4f8df5/ffffff?text=Game+2" },
-                    { name: "测试游戏3", icon: "https://via.placeholder.com/400x225/34a853/ffffff?text=Game+3" },
-                ]);
-            },
-            startGame: function(name) { console.log("启动游戏: " + name); },
-            openLoadData: function(name) { console.log("打开存档: " + name); }
-        };*/
-
-        function renderGames() {
-            const grid = document.getElementById('game-grid');
-            grid.innerHTML = '';
-
+        const DEFAULT_ICON = "https://via.placeholder.com/1920x1080?text=VGAL";
+        // const VGAL = { ... } // Android 端由原生注入
+        function toggleDropdown() {
+            document.getElementById('settingsDropdown').classList.toggle('show');
+        }
+        window.onclick = function(event) {
+            if (!event.target.closest('.settings-dropdown')) {
+                document.getElementById('settingsDropdown').classList.remove('show');
+            }
+        };
+        function saveLayout(layout) {
+            localStorage.setItem('preferred-layout', layout);
+        }
+        function getLayout() {
+            return localStorage.getItem('preferred-layout') || 'single';
+        }
+        function setLayout(layout) {
+            document.getElementById('settingsDropdown').classList.remove('show');
+            const container = document.getElementById('game-container');
+            container.className = `container ${layout}`;
+            container.innerHTML = '';
+            saveLayout(layout);
+            // 获取数据
+            let games = [];
             try {
-                // 获取游戏列表并解析
-                const games = JSON.parse(VGAL.getGames());
-
-                if (!games || games.length === 0) {
-                    grid.innerHTML = '<div class="empty-message">未找到游戏。请将游戏文件放入vgal目录。</div>';
-                    return;
-                }
-
-                // 渲染每个游戏卡片
-                games.forEach(game => {
-                    const card = document.createElement('div');
-                    card.className = 'game-card';
-
+                games = JSON.parse(VGAL.getGames());
+            } catch (e) { games = []; }
+            if (!Array.isArray(games)) games = [];
+            let iconsPerRow = layout === 'single' ? 1 : layout === 'double' ? 2 : 4;
+            // 动态自适应横竖屏
+            if (layout === 'grid') {
+                if (window.innerWidth <= 650) iconsPerRow = 2;
+                else if (window.innerWidth > 1200) iconsPerRow = 5;
+                else iconsPerRow = 4;
+            }
+            for (let i = 0; i < games.length; i += iconsPerRow) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                for (let j = 0; j < iconsPerRow && (i + j) < games.length; j++) {
+                    const game = games[i + j];
+                    const iconWrapper = document.createElement('div');
+                    iconWrapper.className = 'icon-wrapper';
+                    const icon = document.createElement('div');
+                    icon.className = 'icon';
                     const img = document.createElement('img');
-                    img.className = 'game-image';
                     img.src = game.icon || DEFAULT_ICON;
                     img.alt = game.name;
-                    img.loading = "lazy";
                     img.onerror = () => { img.src = DEFAULT_ICON; };
-
-                    const info = document.createElement('div');
-                    info.className = 'game-info';
-
-                    const title = document.createElement('h3');
-                    title.className = 'game-title';
-                    title.textContent = game.name;
-
+                    img.draggable = false;
+                    const iconLabel = document.createElement('div');
+                    iconLabel.className = 'icon-label';
+                    iconLabel.textContent = game.name;
                     const actions = document.createElement('div');
-                    actions.className = 'game-actions';
-
-                    const startBtn = document.createElement('button');
-                    startBtn.className = 'action-btn';
-                    startBtn.textContent = '启动游戏';
-                    startBtn.onclick = (e) => {
+                    actions.className = 'icon-actions';
+                    const startButton = document.createElement('button');
+                    startButton.className = 'action-btn start-btn';
+                    startButton.textContent = '启动游戏';
+                    startButton.onclick = (e) => {
                         e.stopPropagation();
                         VGAL.startGame(game.name);
                     };
-
-                    const loadBtn = document.createElement('button');
-                    loadBtn.className = 'action-btn load-btn';
-                    loadBtn.textContent = '读取存档';
-                    loadBtn.onclick = (e) => {
+                    const loadButton = document.createElement('button');
+                    loadButton.className = 'action-btn load-btn';
+                    loadButton.textContent = '读取存档';
+                    loadButton.onclick = (e) => {
                         e.stopPropagation();
                         VGAL.openLoadData(game.name);
                     };
-
-                    actions.appendChild(startBtn);
-                    actions.appendChild(loadBtn);
-                    
-                    info.appendChild(title);
-                    info.appendChild(actions);
-                    
-                    card.appendChild(img);
-                    card.appendChild(info);
-                    grid.appendChild(card);
-                });
-            } catch (e) {
-                console.error("解析游戏数据失败:", e);
-                grid.innerHTML = '<div class="empty-message">加载游戏列表失败。</div>';
+                    actions.appendChild(startButton);
+                    actions.appendChild(loadButton);
+                    icon.appendChild(img);
+                    icon.appendChild(iconLabel);
+                    icon.appendChild(actions);
+                    iconWrapper.appendChild(icon);
+                    row.appendChild(iconWrapper);
+                }
+                container.appendChild(row);
             }
         }
-
-        // 页面加载完成后渲染游戏列表
-        document.addEventListener('DOMContentLoaded', renderGames);
+        // 安卓横竖屏切换时自适应
+        window.addEventListener('resize', () => setLayout(getLayout()));
+        document.addEventListener('DOMContentLoaded', () => {
+            setLayout(getLayout());
+        });
     </script>
 </body>
 </html>
